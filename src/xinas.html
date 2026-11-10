@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Xinas</title>
+<style>
+/*FONT*/
+
+/*FONT*/
+:root{
+  --a-bg:#0a0a0a; --a-panel:#101010; --a-bar:#1c1c1c; --a-line:#2e2e2e; --a-line-ctl:#3a3a3a; --a-hover:#1f1f1f;
+  --a-ink:#d2d2d2; --a-ink-strong:#fff; --a-ink-dim:#8f8f8f;
+  --a-accent:#76c411; --a-accent-ink:#a5e04a; --a-accent-bg:#1b2512;
+  --a-radius:3px; --a-radius-sm:2px; --a-gap:8px; --a-pad:10px; --a-bar-h:24px; --a-ctl-h:32px; --a-t:120ms;
+  --a-font:Inter,Arial,Helvetica,sans-serif; --a-size:12px; --a-size-sm:11px;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+  --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
+  color-scheme:dark;
+}
+html[data-contrast="alto"]{--a-bar:#fff; --a-line:#fff; --a-line-ctl:#fff; --a-ink:#fff; --a-ink-dim:#cfcfcf}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;background:var(--a-bg);color:var(--a-ink);font:400 var(--a-size)/1.35 var(--a-font);font-variant-numeric:tabular-nums;overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--a-accent);outline-offset:1px}
+
+/* escenario */
+#stage{position:fixed;inset:0;touch-action:none}
+#stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.corner{position:fixed;font-size:var(--a-size-sm);color:var(--a-ink-dim);pointer-events:none;mix-blend-mode:difference}
+.corner::before{content:"";position:absolute;width:10px;height:10px;border:1px solid var(--a-ink-dim)}
+#cTL{top:calc(var(--sat) + 8px);left:calc(var(--sal) + 10px);padding:8px 0 0 8px}
+#cTL::before{left:0;top:0;border-right:0;border-bottom:0}
+#cTR{top:calc(var(--sat) + 8px);right:calc(var(--sar) + 10px);padding:8px 8px 0 0;text-align:right}
+#cTR::before{right:0;top:0;border-left:0;border-bottom:0}
+
+/* ventanas */
+.win{position:fixed;background:var(--a-panel);border:1px solid var(--a-line);border-radius:var(--a-radius);min-width:200px;z-index:5}
+.win>header{height:var(--a-bar-h);background:var(--a-bar);color:var(--a-ink);display:flex;align-items:center;gap:6px;padding:0 4px 0 8px;font-size:var(--a-size-sm);border-bottom:1px solid var(--a-line);border-radius:var(--a-radius) var(--a-radius) 0 0;cursor:default;user-select:none}
+.win>header b{font-weight:500;flex:1}
+.win>header button{height:18px;min-width:18px;border:0;background:none;color:var(--a-ink-dim);cursor:pointer;border-radius:var(--a-radius-sm);padding:0 4px}
+.win>header button:hover{background:var(--a-hover);color:var(--a-ink-strong)}
+.win .body{padding:var(--a-pad);display:grid;gap:var(--a-gap)}
+.win.min .body{display:none}
+
+#wLect{left:calc(var(--sal) + 10px);top:calc(var(--sat) + 44px);width:228px}
+#wAj{right:calc(var(--sar) + 10px);top:calc(var(--sat) + 44px);width:276px;max-height:calc(100% - var(--sat) - var(--sab) - 120px);display:flex;flex-direction:column}
+#wAj .body{overflow:auto;scrollbar-width:thin;scrollbar-color:var(--a-line-ctl) transparent}
+#wAj .body::-webkit-scrollbar{width:6px}#wAj .body::-webkit-scrollbar-thumb{background:var(--a-line-ctl);border-radius:3px}
+
+.sec{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--a-ink-dim);border-top:1px solid var(--a-line);padding-top:8px;margin-top:2px}
+.sec:first-child{border-top:0;padding-top:0;margin-top:0}
+.row{display:grid;grid-template-columns:78px 1fr 40px;align-items:center;gap:8px;min-height:22px}
+.row label{color:var(--a-ink-dim);font-size:var(--a-size-sm)}
+.row output{color:var(--a-ink-strong);text-align:right;font-size:var(--a-size-sm)}
+.row.t{grid-template-columns:78px 1fr}
+.meter{height:3px;background:var(--a-line);border-radius:2px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--a-accent);width:0}
+.code{font-size:15px;letter-spacing:.06em;color:var(--a-ink-strong);word-break:break-all}
+.dim{color:var(--a-ink-dim);font-size:var(--a-size-sm)}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;margin:0;--p:50%}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--a-accent) var(--p),var(--a-line-ctl) var(--p))}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--a-accent) var(--p),var(--a-line-ctl) var(--p))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:6px;height:14px;margin-top:-6px;background:var(--a-ink-strong);border:0;border-radius:1px}
+input[type=range]::-moz-range-thumb{width:6px;height:14px;background:var(--a-ink-strong);border:0;border-radius:1px}
+input[type=text]{width:100%;height:26px;background:var(--a-bg);border:1px solid var(--a-line-ctl);border-radius:var(--a-radius-sm);padding:0 6px;font-size:var(--a-size-sm)}
+
+.seg{display:flex;border:1px solid var(--a-line-ctl);border-radius:var(--a-radius-sm);overflow:hidden}
+.seg button{flex:1;height:24px;border:0;background:none;color:var(--a-ink-dim);font-size:var(--a-size-sm);cursor:pointer;padding:0 4px;transition:color var(--a-t),background var(--a-t)}
+.seg button+button{border-left:1px solid var(--a-line-ctl)}
+.seg button[aria-pressed=true]{background:var(--a-hover);color:var(--a-ink-strong)}
+.btn{height:var(--a-ctl-h);border:1px solid var(--a-line-ctl);background:var(--a-panel);border-radius:var(--a-radius);padding:0 10px;cursor:pointer;color:var(--a-ink);transition:color var(--a-t),border-color var(--a-t),background var(--a-t);white-space:nowrap}
+.btn:hover{background:var(--a-hover);color:var(--a-ink-strong)}
+.btn.main{border-color:var(--a-accent);color:var(--a-accent-ink);background:var(--a-accent-bg)}
+.btn[aria-pressed=true]{border-color:var(--a-accent);color:var(--a-accent-ink);background:var(--a-accent-bg)}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* dock */
+#cDock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 10px);display:flex;gap:6px;padding:6px;background:var(--a-panel);border:1px solid var(--a-line);border-radius:var(--a-radius);z-index:6;max-width:calc(100% - 20px);overflow-x:auto;scrollbar-width:none}
+#cDock::-webkit-scrollbar{display:none}
+#cDock .seg{height:var(--a-ctl-h)}#cDock .seg button{height:100%;padding:0 10px}
+#cDock .sep{width:1px;background:var(--a-line);margin:2px 2px}
+body.hide .win,body.hide #cDock,body.hide .corner,body.hide body.hide 
+
+
+/* guardar */
+#wSave{left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,calc(100% - 20px));max-height:calc(100% - 40px);display:flex;flex-direction:column;z-index:8}
+#wSave .body{overflow:auto}
+#saveImg{width:100%;max-height:52vh;object-fit:contain;image-rendering:pixelated;background:#fff;border:1px solid var(--a-line)}
+.acts{display:flex;gap:6px}.acts .btn{flex:1}
+.cred,#cred{font-size:10px;color:var(--a-ink-dim);line-height:1.5}
+.cred a,#cred a{color:var(--a-ink)}
+
+#wLect .hcode{display:none;font-size:var(--a-size-sm);flex:none}
+#wLect.min .hcode{display:inline}
+@media (max-width:720px){
+  #wLect{width:auto;right:calc(var(--sar) + 10px);min-width:0}
+  #wLect .body{grid-template-columns:1fr 1fr;column-gap:14px}
+  #wLect .row{grid-template-columns:52px 1fr 30px}
+  #wLect .full{grid-column:1/-1}
+  #wAj{left:calc(var(--sal) + 10px);right:calc(var(--sar) + 10px);width:auto;top:auto;bottom:calc(var(--sab) + 62px);max-height:56%}
+  .corner{display:none}
+}
+
+/* ---------- visor ---------- */
+
+#video,#testbg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+body[data-mode=ar] #video,body[data-mode=ar] #testbg:not([hidden]){display:block}
+#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#grid{position:fixed;inset:0;pointer-events:none;mix-blend-mode:difference;opacity:.18;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:64px 64px;background-position:center}
+body[data-mode=ar] #grid{display:none}
+.win{position:fixed;background:var(--a-panel);border:1px solid var(--a-line);border-radius:var(--a-radius);z-index:5}
+.win>header{height:var(--a-bar-h);background:var(--a-bar);display:flex;align-items:center;gap:6px;padding:0 4px 0 8px;font-size:var(--a-size-sm);border-bottom:1px solid var(--a-line);border-radius:var(--a-radius) var(--a-radius) 0 0;user-select:none}
+.win>header b{font-weight:500;flex:1}
+.win>header button{height:18px;min-width:18px;border:0;background:none;color:var(--a-ink-dim);cursor:pointer;border-radius:var(--a-radius-sm)}
+.win>header button:hover{background:var(--a-hover);color:var(--a-ink-strong)}
+.win .body{padding:var(--a-pad);display:grid;gap:var(--a-gap)}
+.win.min .body{display:none}
+#wInfo{left:calc(var(--sal) + 10px);top:calc(var(--sat) + 10px);width:236px;z-index:6}
+.code{font-size:15px;letter-spacing:.06em;color:var(--a-ink-strong)}
+.hcode{display:none;font-size:var(--a-size-sm);color:var(--a-ink-strong);letter-spacing:.05em}
+.win.min .hcode{display:inline}
+.dim{color:var(--a-ink-dim);font-size:var(--a-size-sm)}
+.kv{display:grid;grid-template-columns:76px 1fr;gap:4px 8px;font-size:var(--a-size-sm)}
+.kv span{color:var(--a-ink-dim)}.kv b{font-weight:400;color:var(--a-ink-strong)}
+#iHex{display:grid;gap:3px;width:56px}
+#iHex i{display:block;height:4px;background:var(--a-ink-strong)}
+#iHex i.n{background:linear-gradient(90deg,var(--a-ink-strong) 42%,transparent 40% 60%,var(--a-ink-strong) 60%)}
+.hexrow{display:flex;gap:10px;align-items:center}
+.meter{height:3px;background:var(--a-line);border-radius:2px;overflow:hidden}.meter i{display:block;height:100%;background:var(--a-accent);width:0}
+#story{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 64px);width:min(420px,calc(100% - 20px));background:var(--a-panel);border:1px solid var(--a-line);border-radius:var(--a-radius);padding:8px 10px;z-index:5;display:grid;gap:5px}
+#story .top{display:flex;justify-content:space-between;align-items:baseline;font-size:var(--a-size-sm)}
+#iStage{color:var(--a-accent-ink)}
+#iStory{color:var(--a-ink);font-size:13px;line-height:1.4}
+#dock{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--sab) + 10px);display:flex;gap:6px;padding:6px;background:var(--a-panel);border:1px solid var(--a-line);border-radius:var(--a-radius);z-index:6;max-width:calc(100% - 20px);align-items:center}
+.btn{height:var(--a-ctl-h);border:1px solid var(--a-line-ctl);background:var(--a-panel);border-radius:var(--a-radius);padding:0 10px;cursor:pointer;color:var(--a-ink);white-space:nowrap;transition:color var(--a-t),border-color var(--a-t),background var(--a-t)}
+.btn:hover{background:var(--a-hover);color:var(--a-ink-strong)}
+.btn.main,.btn[aria-pressed=true]{border-color:var(--a-accent);color:var(--a-accent-ink);background:var(--a-accent-bg)}
+.seg{display:flex;border:1px solid var(--a-line-ctl);border-radius:var(--a-radius-sm);overflow:hidden}
+.seg button{flex:1;height:24px;border:0;background:none;color:var(--a-ink-dim);font-size:var(--a-size-sm);cursor:pointer;padding:0 8px}
+.seg button+button{border-left:1px solid var(--a-line-ctl)}
+.seg button[aria-pressed=true]{background:var(--a-hover);color:var(--a-ink-strong)}
+#wInfo .row{display:grid;grid-template-columns:60px 1fr 42px;align-items:center;gap:8px}
+.row label{color:var(--a-ink-dim);font-size:var(--a-size-sm)}.row output{color:var(--a-ink-strong);text-align:right;font-size:var(--a-size-sm)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:22px;background:transparent;margin:0;--p:0%}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:linear-gradient(90deg,var(--a-accent) var(--p),var(--a-line-ctl) var(--p))}
+input[type=range]::-moz-range-track{height:2px;background:linear-gradient(90deg,var(--a-accent) var(--p),var(--a-line-ctl) var(--p))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:6px;height:14px;margin-top:-6px;background:var(--a-ink-strong);border:0;border-radius:1px}
+input[type=range]::-moz-range-thumb{width:6px;height:14px;background:var(--a-ink-strong);border:0;border-radius:1px}
+#hint{position:fixed;left:50%;top:42%;transform:translate(-50%,-50%);width:180px;height:180px;border:1px solid rgba(255,255,255,.7);z-index:4;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;mix-blend-mode:difference}
+#hint span{transform:translateY(28px);font-size:var(--a-size-sm);color:#fff;white-space:nowrap}
+#hint::before,#hint::after{content:"";position:absolute;width:14px;height:14px;border:2px solid #fff}
+#hint::before{left:-2px;top:-2px;border-right:0;border-bottom:0}#hint::after{right:-2px;bottom:-2px;border-left:0;border-top:0}
+#msg{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 60px);z-index:40;background:var(--a-panel);border:1px solid var(--a-line);border-radius:var(--a-radius);padding:5px 10px;font-size:var(--a-size-sm);max-width:calc(100% - 20px)}
+#restore{z-index:41;position:fixed;right:calc(var(--sar) + 10px);bottom:calc(var(--sab) + 10px);width:28px;height:28px;border:1px solid var(--a-line);background:var(--a-panel);color:var(--a-ink-dim);border-radius:var(--a-radius);display:none;cursor:pointer}
+body.hide .win,body.hide #dock,body.hide #story,body.hide #grid{display:none!important}body.hide #restore{display:block}
+#cred{font-size:10px;color:var(--a-ink-dim);line-height:1.5}#cred a{color:var(--a-ink)}
+body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
+@media (max-width:720px){#wInfo{right:calc(var(--sar) + 10px);width:auto}}
+
+#crear{position:fixed;inset:0;z-index:20;background:var(--a-bg)}
+.btn.quiet{border-color:transparent;color:var(--a-ink-dim);background:none;padding:0 8px}
+.btn.quiet:hover{color:var(--a-ink-strong);background:var(--a-hover)}
+#cDock .sep{width:1px;background:var(--a-line);margin:2px 2px}
+
+</style>
+</head>
+<body data-mode="jardin">
+<video id="video" playsinline muted autoplay></video>
+<img id="testbg" hidden alt="">
+<canvas id="gl"></canvas>
+<div id="grid"></div>
+<div id="hint" hidden><span>apunta al QR de la tira</span></div>
+<div id="msg" role="status" aria-live="polite" hidden></div>
+
+<section class="win" id="wInfo" aria-label="semilla">
+  <header><b>xinas</b><span class="hcode" id="hCode"></span><button data-min aria-label="minimizar">–</button></header>
+  <div class="body">
+    <div><div class="dim">nº</div><div class="code" id="iCode">—</div></div>
+    <div class="kv"><span>sembrada</span><b id="iBorn">—</b><span>días</span><b id="iDays">0</b></div>
+    <div class="hexrow"><div id="iHex"></div><div class="dim" id="iHexN">—</div></div>
+    <div class="row"><label for="sDias">tiempo</label><input type="range" id="sDias" min="0" max="120" step="1" value="0"><output id="oDias">hoy</output></div>
+    <div class="row" style="grid-template-columns:60px 1fr"><label>trazo</label><div class="seg" id="gInk"><button data-v="tinta" aria-pressed="true">tinta</button><button data-v="luz" aria-pressed="false">luz</button></div></div>
+    <div class="row"><label for="sFov">lente</label><input type="range" id="sFov" min="40" max="90" step="1" value="62" style="--p:44%"><output id="oFov">62°</output></div>
+    <div class="dim" id="tDemo" hidden>semilla de muestra: abre este visor desde el QR de una tira para ver la tuya.</div>
+    <div id="cred">Diseño, investigación y desarrollo: Héctor Cruz Juárez — <a href="https://hectorcruz.com.mx" target="_blank" rel="noopener">hectorcruz.com.mx</a><br>Colección Alchemy of Meaning · GPL-3.0 · three.js (MIT) · jsQR (Apache-2.0)</div>
+  </div>
+</section>
+
+<section id="story" aria-live="polite">
+  <div class="top"><span id="iStage">brote</span><span class="dim">crecimiento</span></div>
+  <div class="meter"><i id="iAge"></i></div>
+  <div id="iStory"></div>
+</section>
+
+<nav id="dock">
+  <button class="btn main" id="bAR" aria-pressed="false">sobre la tira</button>
+  <button class="btn" id="bRe">volver a crecer</button>
+  <button class="btn" id="bHide" aria-label="ocultar interfaz">h</button>
+  <button class="btn quiet" id="bCrear" aria-label="crear una tira">crear</button>
+</nav>
+<button id="restore" aria-label="mostrar interfaz">▪</button>
+
+<div id="crear" hidden>
+<div id="stage"><canvas id="cv"></canvas></div>
+<div class="corner" id="cTL">xinas · crear · v0.3</div>
+<div class="corner" id="cTR">—</div>
+
+<section class="win" id="wLect" aria-label="lecturas">
+  <header><b>lecturas</b><span class="code hcode" id="lhCode"></span><button data-min aria-label="minimizar">–</button></header>
+  <div class="body">
+    <div class="full"><div class="dim">semilla nº</div><div class="code" id="lCode">—</div></div>
+    <div class="row"><label>brillo</label><div class="meter"><i id="mB"></i></div><output id="oB">0</output></div>
+    <div class="row"><label>contraste</label><div class="meter"><i id="mC"></i></div><output id="oC">0</output></div>
+    <div class="row"><label>bordes</label><div class="meter"><i id="mE"></i></div><output id="oE">0</output></div>
+    <div class="row"><label>ángulo</label><div class="meter"><i id="mA"></i></div><output id="oA">0°</output></div>
+    <div class="row"><label>masa x</label><div class="meter"><i id="mX"></i></div><output id="oX">0</output></div>
+    <div class="row"><label>masa y</label><div class="meter"><i id="mY"></i></div><output id="oY">0</output></div>
+    <div class="full dim" id="lPlant">—</div>
+  </div>
+</section>
+
+<section class="win" id="wAj" aria-label="ajustes" hidden>
+  <header><b>ajustes</b><button id="xAj" aria-label="cerrar">×</button></header>
+  <div class="body">
+    <div class="sec">foto</div>
+    <div class="row"><label for="sZoom">encuadre</label><input type="range" id="sZoom" min="1" max="4" step="0.01" value="1"><output id="oZoom"></output></div>
+    <div class="row"><label for="sExp">exposición</label><input type="range" id="sExp" min="-1" max="1" step="0.01" value="0"><output id="oExp"></output></div>
+    <div class="row"><label for="sCon">contraste</label><input type="range" id="sCon" min="0.5" max="2.2" step="0.01" value="1.1"><output id="oCon"></output></div>
+    <div class="row t"><label>tramado</label><div class="seg" id="gDit"><button data-v="atkinson">atkinson</button><button data-v="floyd">floyd</button><button data-v="bayer">bayer</button><button data-v="umbral">umbral</button></div></div>
+    <div class="dim">arrastra sobre la foto para moverla</div>
+
+    <div class="sec">fusión</div>
+    <div class="row t"><label>2ª foto</label><div class="acts"><button class="btn" id="b2">elegir</button><button class="btn" id="b2x" disabled>quitar</button></div></div>
+    <div class="row t"><label>modo</label><div class="seg" id="gMode"><button data-v="multiply">mult</button><button data-v="screen">pant</button><button data-v="difference">dif</button><button data-v="overlay">sup</button><button data-v="lighten">aclar</button></div></div>
+    <div class="row"><label for="sMix">mezcla</label><input type="range" id="sMix" min="0" max="1" step="0.01" value="0.6"><output id="oMix"></output></div>
+    <div class="row"><label for="sSc2">escala</label><input type="range" id="sSc2" min="0.3" max="3" step="0.01" value="1.6"><output id="oSc2"></output></div>
+
+    <div class="sec">tira</div>
+    <div class="row"><label for="sLen">largo</label><input type="range" id="sLen" min="112" max="150" step="1" value="118"><output id="oLen"></output></div>
+    <div class="row"><label for="sBrote">brote</label><input type="range" id="sBrote" min="0.05" max="1" step="0.01" value="0.45"><output id="oBrote"></output></div>
+    <div class="row t"><label for="tL1">línea 1</label><input type="text" id="tL1" value="hectorcruz.com.mx" autocomplete="off"></div>
+    <div class="row t"><label for="tL2">línea 2</label><input type="text" id="tL2" value="@hellohectorcruz" autocomplete="off"></div>
+    <div class="row t"><label for="tBase">QR lleva a</label><input type="text" id="tBase" value="https://hectorcruz.com.mx/xinas/" autocomplete="off" spellcheck="false"></div>
+    <div class="dim" id="lQR">—</div>
+
+    <div class="sec">semilla</div>
+    <div class="acts"><button class="btn" id="bSalt">otra semilla de la misma foto</button></div>
+    <div class="row t"><label>contraste ui</label><div class="seg" id="gCon"><button data-v="suave">suave</button><button data-v="alto">alto</button></div></div>
+    <div class="cred">Diseño, investigación y desarrollo: Héctor Cruz Juárez — <a href="https://hectorcruz.com.mx" target="_blank" rel="noopener">hectorcruz.com.mx</a><br>Colección Alchemy of Meaning. GPL-3.0 · QR: Kazuhiko Arase (MIT) · Silkscreen (OFL).<br>h oculta la interfaz · f elige foto · esc vuelve al visor</div>
+  </div>
+</section>
+
+<section class="win" id="wSave" aria-label="guardar" hidden>
+  <header><b>tira para imprimir</b><button id="xSave" aria-label="cerrar">×</button></header>
+  <div class="body">
+    <img id="saveImg" alt="tira lista para imprimir">
+    <div class="dim" id="saveInfo">—</div>
+    <div class="acts"><button class="btn main" id="bShare">guardar en fotos</button><button class="btn" id="bVer2">ver crecer</button></div>
+    <div class="dim">Imprime desde la app de la impresora en modo texto o umbral, al 100 % de ancho, para que no vuelva a tramar la imagen.</div>
+  </div>
+</section>
+
+<nav id="cDock" aria-label="crear">
+  <button class="btn main" id="bFoto">foto</button>
+  <button class="btn" id="bAj" aria-pressed="false">ajustes</button>
+  <button class="btn" id="bSave">guardar</button>
+  <button class="btn" id="bVer">ver crecer</button>
+  <div class="sep"></div>
+  <button class="btn" id="cHide" aria-label="ocultar interfaz (h)">h</button>
+  <button class="btn" id="cClose" aria-label="volver al visor">×</button>
+</nav>
+<input type="file" id="f1" accept="image/*" hidden>
+<input type="file" id="f2" accept="image/*" hidden>
+</div>
+<script>
+/*PLANTA*/
+</script>
+<script>
+/*QR*/
+</script>
+<script>
+/*APP*/
+</script>
+<script>
+/*VISOR*/
+</script>
+</body>
+</html>

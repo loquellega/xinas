@@ -1,0 +1,11 @@
+{
+  "name": "xinas",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Xinas — tira térmica con QR que hace crecer una planta procedural en AR. Colección Alchemy of Meaning.",
+  "author": "Héctor Cruz Juárez (https://hectorcruz.com.mx)",
+  "license": "GPL-3.0-only",
+  "scripts": { "build": "python3 build.py" },
+  "dependencies": { "jsqr": "^1.4.0", "three": "^0.187.0" },
+  "devDependencies": { "esbuild": "^0.28.2" }
+}
