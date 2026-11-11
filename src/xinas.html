@@ -121,7 +121,7 @@ body[data-mode=ar] #grid{display:none}
 .win>header button:hover{background:var(--a-hover);color:var(--a-ink-strong)}
 .win .body{padding:var(--a-pad);display:grid;gap:var(--a-gap)}
 .win.min .body{display:none}
-#wInfo{left:calc(var(--sal) + 10px);top:calc(var(--sat) + 10px);width:236px;z-index:6}
+#wInfo{left:calc(var(--sal) + 10px);top:calc(var(--sat) + 44px);width:250px;z-index:16}
 .code{font-size:15px;letter-spacing:.06em;color:var(--a-ink-strong)}
 .hcode{display:none;font-size:var(--a-size-sm);color:var(--a-ink-strong);letter-spacing:.05em}
 .win.min .hcode{display:inline}
@@ -158,7 +158,7 @@ input[type=range]::-moz-range-thumb{width:6px;height:14px;background:var(--a-ink
 #hint::before{left:-2px;top:-2px;border-right:0;border-bottom:0}#hint::after{right:-2px;bottom:-2px;border-left:0;border-top:0}
 #msg{position:fixed;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 60px);z-index:40;background:var(--a-panel);border:1px solid var(--a-line);border-radius:var(--a-radius);padding:5px 10px;font-size:var(--a-size-sm);max-width:calc(100% - 20px)}
 #restore{z-index:41;position:fixed;right:calc(var(--sar) + 10px);bottom:calc(var(--sab) + 10px);width:28px;height:28px;border:1px solid var(--a-line);background:var(--a-panel);color:var(--a-ink-dim);border-radius:var(--a-radius);display:none;cursor:pointer}
-body.hide .win,body.hide #dock,body.hide #story,body.hide #grid{display:none!important}body.hide #restore{display:block}
+body.hide .win,body.hide #vivo,body.hide #capas,body.hide #grid{display:none!important}body.hide #restore{display:block}
 #cred{font-size:10px;color:var(--a-ink-dim);line-height:1.5}#cred a{color:var(--a-ink)}
 body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
 @media (max-width:720px){#wInfo{right:calc(var(--sar) + 10px);width:auto}}
@@ -168,6 +168,56 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
 .btn.quiet:hover{color:var(--a-ink-strong);background:var(--a-hover)}
 #cDock .sep{width:1px;background:var(--a-line);margin:2px 2px}
 
+
+/* ---------- capas ---------- */
+#capas .capa{position:fixed;inset:0;z-index:12;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:calc(var(--sat) + 24px) 22px calc(var(--sab) + 24px);background:radial-gradient(ellipse at 50% 45%,rgba(10,10,10,.55),rgba(10,10,10,.92) 70%)}
+#capas .capa.velo{background:rgba(6,6,6,.94);z-index:14}
+#capas .capa[hidden]{display:none!important}
+.centro{max-width:420px;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
+.centro.texto{text-align:left;align-items:flex-start;gap:12px}
+.centro.texto p{margin:0;font-size:15px;line-height:1.55;color:var(--a-ink)}
+.nombre{margin:0;font-weight:300;font-size:44px;letter-spacing:.2em;color:var(--a-ink-strong);text-transform:lowercase}
+h2.nombre{font-size:22px;letter-spacing:.12em}
+.verso{margin:0;font-size:17px;font-weight:300;line-height:1.5;color:var(--a-ink-strong);letter-spacing:.01em}
+.sub{margin:0;font-size:13px;color:var(--a-ink-dim)}
+.marca{margin:0;font-size:11px;letter-spacing:.14em;color:var(--a-ink-dim);text-transform:uppercase}
+.grande{min-height:54px;padding:0 28px;border-radius:28px;border:1px solid var(--a-accent);background:var(--a-accent-bg);color:var(--a-accent-ink);font-size:17px;letter-spacing:.04em;cursor:pointer;transition:background var(--a-t),color var(--a-t)}
+.grande:hover{background:#243318;color:#c4f07a}
+.liga{background:none;border:0;color:var(--a-ink-dim);font-size:13px;padding:8px 6px;cursor:pointer;text-decoration:underline;text-decoration-color:var(--a-line-ctl);text-underline-offset:4px}
+.liga:hover{color:var(--a-ink-strong)}
+.pie{position:absolute;bottom:calc(var(--sab) + 14px);left:0;right:0;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.acciones{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:18px}
+.fila{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.pasos{margin:0;padding-left:20px;text-align:left;color:var(--a-ink);font-size:14px;line-height:1.9}
+.pasos b{font-weight:400;color:var(--a-ink-strong)}
+/* lectura */
+.lect{display:flex;gap:22px;align-items:center;max-width:720px;width:100%}
+#lTira{width:min(42vw,230px);height:auto;image-rendering:pixelated;background:#fff;box-shadow:0 0 0 1px var(--a-line);opacity:0;transform:translateY(8px);transition:opacity 1.2s,transform 1.2s}
+#lTira.ve{opacity:1;transform:none}
+.datos{flex:1;display:grid;gap:12px;min-width:0}
+#lDatos{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12px}
+#lDatos dt{color:var(--a-ink-dim)}#lDatos dd{margin:0;color:var(--a-ink-strong);font-variant-numeric:tabular-nums}
+#lDatos .ap{opacity:0;transition:opacity .5s}#lDatos .ap.ve{opacity:1}
+.hexg{display:grid;gap:4px;width:64px}
+.hexg i{display:block;height:5px;background:var(--a-ink-strong);opacity:0;transform:scaleX(.2);transition:opacity .6s,transform .6s}
+.hexg i.n{background:linear-gradient(90deg,var(--a-ink-strong) 40%,transparent 40% 60%,var(--a-ink-strong) 60%)}
+.hexg i.ve{opacity:1;transform:none}
+.codigo{font-size:18px;letter-spacing:.14em;color:var(--a-accent-ink);min-height:24px}
+@media (max-width:560px){.lect{flex-direction:column;gap:14px}#lTira{width:44vw}.datos{width:100%}}
+/* vivo: la planta creciendo */
+body:has(#vivo:not([hidden])) #grid{display:none}
+#vivo{position:fixed;inset:0;z-index:10;pointer-events:none}
+#vivo[hidden]{display:none!important}
+#vivo .arriba{position:absolute;top:calc(var(--sat) + 12px);left:16px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:auto}
+#vivo .arriba .liga{font-size:18px;text-decoration:none}
+#verso{position:absolute;left:24px;right:24px;bottom:calc(var(--sab) + 120px);text-align:center;font-size:18px;opacity:0;transition:opacity 1.4s;text-shadow:0 0 18px #000,0 0 4px #000}
+#verso.ve{opacity:1}
+#vivo .crece{position:absolute;left:30%;right:30%;bottom:calc(var(--sab) + 100px);height:1px;background:rgba(255,255,255,.12)}
+#vivo .crece i{display:block;height:100%;width:0;background:var(--a-accent)}
+#vFin{position:absolute;left:0;right:0;bottom:calc(var(--sab) + 18px);pointer-events:auto}
+#vFin .liga{text-shadow:0 0 8px #000}
+body[data-mode=ar] #vivo .crece{bottom:calc(var(--sab) + 100px)}
+body.fin #verso{bottom:calc(var(--sab) + 150px)}
 </style>
 </head>
 <body data-mode="jardin">
@@ -178,36 +228,87 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
 <div id="hint" hidden><span>apunta al QR de la tira</span></div>
 <div id="msg" role="status" aria-live="polite" hidden></div>
 
-<section class="win" id="wInfo" aria-label="semilla">
-  <header><b>xinas</b><span class="hcode" id="hCode"></span><button data-min aria-label="minimizar">–</button></header>
+<section class="win" id="wInfo" aria-label="la semilla" hidden>
+  <header><b>la semilla</b><span class="hcode" id="hCode"></span><button id="xInfo" aria-label="cerrar">×</button></header>
   <div class="body">
     <div><div class="dim">nº</div><div class="code" id="iCode">—</div></div>
     <div class="kv"><span>sembrada</span><b id="iBorn">—</b><span>días</span><b id="iDays">0</b></div>
     <div class="hexrow"><div id="iHex"></div><div class="dim" id="iHexN">—</div></div>
-    <div class="row"><label for="sDias">tiempo</label><input type="range" id="sDias" min="0" max="120" step="1" value="0"><output id="oDias">hoy</output></div>
     <div class="row"><label for="sFov">lente</label><input type="range" id="sFov" min="40" max="90" step="1" value="62" style="--p:44%"><output id="oFov">62°</output></div>
-    <div class="dim" id="tDemo" hidden>semilla de muestra: abre este visor desde el QR de una tira para ver la tuya.</div>
+    <div class="dim">si la planta se ve inclinada sobre la tira, ajusta la lente.</div>
     <div id="cred">Diseño, investigación y desarrollo: Héctor Cruz Juárez — <a href="https://hectorcruz.com.mx" target="_blank" rel="noopener">hectorcruz.com.mx</a><br>Colección Alchemy of Meaning · GPL-3.0 · three.js (MIT) · jsQR (Apache-2.0)</div>
   </div>
 </section>
 
-<section id="story" aria-live="polite">
-  <div class="top"><span id="iStage">brote</span><span class="dim">crecimiento</span></div>
-  <div class="meter"><i id="iAge"></i></div>
-  <div id="iStory"></div>
-</section>
+<!-- capas: umbral → crear → lectura → imprime → germina → sembrar -->
+<div id="capas">
+  <section class="capa" id="cUmbral" hidden>
+    <div class="centro">
+      <h1 class="nombre">xinas</h1>
+      <p class="verso">cada instante guarda una semilla.</p>
+      <button class="grande" id="bSemilla">crear semilla</button>
+      <p class="sub">quédate quieto. la luz que te toca ahora es tuya.</p>
+    </div>
+    <nav class="pie"><button class="liga" id="bMuestra">ver una semilla</button><button class="liga" id="bQue1">qué es xinas</button><button class="liga" id="bAfinar0">afinar</button></nav>
+  </section>
 
-<nav id="dock">
-  <button class="btn main" id="bAR" aria-pressed="false">sobre la tira</button>
-  <button class="btn" id="bRe">volver a crecer</button>
-  <button class="btn" id="bHide" aria-label="ocultar interfaz">h</button>
-  <button class="btn quiet" id="bCrear" aria-label="crear una tira">crear</button>
-</nav>
+  <section class="capa" id="cLectura" hidden>
+    <div class="lect">
+      <canvas id="lTira" width="384" height="704" aria-label="la tira"></canvas>
+      <div class="datos">
+        <p class="verso">esto es lo que la luz recordó de ti.</p>
+        <dl id="lDatos"></dl>
+        <div class="hexg" id="lHex"></div>
+        <div class="codigo" id="lCodigo"></div>
+      </div>
+    </div>
+    <nav class="acciones"><button class="grande" id="bGuardar">guardar para imprimir</button>
+      <div class="fila"><button class="liga" id="bOtra">otra foto</button><button class="liga" id="bAfinar">afinar</button><button class="liga" id="bSaltar">ver cómo germina</button></div></nav>
+  </section>
+
+  <section class="capa" id="cImprime" hidden>
+    <div class="centro">
+      <p class="verso">el papel se irá borrando. así es el papel.</p>
+      <ol class="pasos"><li>abre la app de tu impresora</li><li>elige la imagen guardada: <b id="iNom">xinas.png</b></li><li>modo texto o umbral, al 100 % de ancho</li></ol>
+      <button class="grande" id="bImpresa">ya está impresa · ver cómo germina</button>
+      <button class="liga" id="bReguardar">guardar otra vez</button>
+    </div>
+  </section>
+
+  <section class="capa" id="cGermina" hidden>
+    <div class="centro">
+      <p class="marca" id="gMarca">semilla nº —</p>
+      <p class="verso">lo que se borra en el papel, crece aquí.</p>
+      <button class="grande" id="bGerminar">toca para germinar</button>
+      <button class="liga" id="bSinTira">verla sin la tira</button>
+    </div>
+  </section>
+
+  <section id="vivo" hidden>
+    <div class="arriba"><span class="marca" id="vMarca">—</span><button class="liga" id="bInfo" aria-label="la semilla">ⓘ</button></div>
+    <p class="verso" id="verso"></p>
+    <div class="crece"><i id="vAge"></i></div>
+    <nav class="acciones" id="vFin" hidden><button class="grande" id="bSembrar">sembrar en Endeles</button>
+      <div class="fila"><button class="liga" id="bRe">volver a crecer</button><button class="liga" id="bModo">sobre la tira</button><button class="liga" id="bQue2">qué es xinas</button><button class="liga" id="bCrear">crear semilla</button></div></nav>
+  </section>
+
+  <section class="capa velo" id="cQue" hidden>
+    <div class="centro texto">
+      <h2 class="nombre">xinas: semilla</h2>
+      <p>cada retrato guarda la luz de un instante: el minuto, el lugar, la forma en que la luz tocó a alguien. de esa lectura nace una semilla que no se repite.</p>
+      <p>la tira térmica es su cuerpo frágil: el calor y los años la irán borrando.</p>
+      <p>la planta es su memoria. germina al mirarla y, sembrada en Endeles, sigue creciendo en un bosque que no se apaga.</p>
+      <p class="verso">lo impermanente, en el papel. lo que permanece, en el bosque.</p>
+      <button class="liga" id="xQue">cerrar</button>
+    </div>
+  </section>
+</div>
 <button id="restore" aria-label="mostrar interfaz">▪</button>
+<input type="file" id="fCam" accept="image/*" capture="environment" hidden>
 
 <div id="crear" hidden>
 <div id="stage"><canvas id="cv"></canvas></div>
-<div class="corner" id="cTL">xinas · crear · v0.4</div>
+<div class="corner" id="cTL">xinas · afinar · v0.5</div>
 <div class="corner" id="cTR">—</div>
 
 <section class="win" id="wLect" aria-label="lecturas">
@@ -264,7 +365,7 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
   <div class="body">
     <img id="saveImg" alt="tira lista para imprimir">
     <div class="dim" id="saveInfo">—</div>
-    <div class="acts"><button class="btn main" id="bShare">guardar en fotos</button><button class="btn" id="bVer2">ver crecer</button></div>
+    <div class="acts"><button class="btn main" id="bShare">guardar en fotos</button><button class="btn" id="bVer2">listo</button></div>
     <div class="dim">Imprime desde la app de la impresora en modo texto o umbral, al 100 % de ancho, para que no vuelva a tramar la imagen.</div>
   </div>
 </section>
@@ -273,7 +374,7 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
   <button class="btn main" id="bFoto">foto</button>
   <button class="btn" id="bAj" aria-pressed="false">ajustes</button>
   <button class="btn" id="bSave">guardar</button>
-  <button class="btn" id="bVer">ver crecer</button>
+  <button class="btn main" id="bVer">listo</button>
   <div class="sep"></div>
   <button class="btn" id="cHide" aria-label="ocultar interfaz (h)">h</button>
   <button class="btn" id="cClose" aria-label="volver al visor">×</button>

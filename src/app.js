@@ -1,9 +1,9 @@
-/* Xinas v0.4 · crear · retrato + instante → lecturas → código → planta → tira térmica 58 × 88 mm con QR
+/* Xinas v0.5 · crear (afinar) · retrato + instante → lecturas → código → planta → tira térmica 58 × 88 mm con QR
    Colección Alchemy of Meaning · Héctor Cruz Juárez · GPL-3.0 */
 (() => {
 'use strict';
 const $ = s => document.querySelector(s);
-const VER = '0.4';
+const VER = '0.5';
 const { PW, DPMM, PHOTO_Y, QR_Y, QR_BOX, H:TH } = window.Planta.TIRA;   // 384 puntos = 48 mm imprimibles a 203 dpi
 const D2R = Math.PI/180;
 const clamp = (v, a=0, b=1) => Math.min(b, Math.max(a, v));
@@ -141,6 +141,7 @@ function renderTira(bits, code, plant, url){
 /* ---------------- tubería ---------------- */
 let DEMO = null;
 function compute(){
+  blob = null;
   const g = compose(PW), f = features(g, PW);
   const q = [f.b, f.c, f.e, f.a, f.x, f.y].map(v => Math.round(clamp(v)*255));
   const minute = minuteIndex(S.born || Date.now());
@@ -216,10 +217,14 @@ async function loadImg(file){
     c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); return c;
   } finally { URL.revokeObjectURL(url); }
 }
+async function loadFile(f, fresh){
+  img1 = await loadImg(f); demo = false; S.zoom = 1; S.cx = S.cy = .5; S.exp = 0;
+  S.born = fresh ? Date.now() : ((f.lastModified && Date.now() - f.lastModified < 30*864e5) ? f.lastModified : Date.now());
+  syncAll(); dirty = true; save(); compute(); return G;
+}
 $('#f1').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try { img1 = await loadImg(f); demo = false; S.zoom = 1; S.cx = S.cy = .5; S.born = (f.lastModified && Date.now() - f.lastModified < 30*864e5) ? f.lastModified : Date.now(); syncAll(); dirty = true; save(); msg('semilla nueva'); }
-  catch(err){ msg('No se pudo abrir esa imagen.'); }
+  try { await loadFile(f); msg('semilla nueva'); } catch(err){ msg('No se pudo abrir esa imagen.'); }
 };
 $('#f2').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
@@ -286,6 +291,22 @@ $('#bSave').onclick = async () => {
   $('#wSave').hidden = false;
 };
 $('#xSave').onclick = () => $('#wSave').hidden = true;
+async function prepareBlob(){
+  if (dirty) compute();
+  blob = await new Promise(r => G.tira.toBlob(r, 'image/png'));
+  if (blobURL) URL.revokeObjectURL(blobURL); blobURL = blob ? URL.createObjectURL(blob) : null; fname = `xinas-${G.code}.png`;
+  return blob;
+}
+/* guarda la tira: en iPhone abre la hoja de compartir («Guardar imagen» la manda a Fotos) */
+async function saveTira(){
+  if (!blob) await prepareBlob();
+  if (!blob){ msg('No se pudo generar la imagen.'); return false; }
+  const dl = await dlP;
+  if (dl){ try { await dl.save({filename:fname, data:blob}); return true; } catch(e){ return false; } }
+  const file = new File([blob], fname, {type:'image/png'});
+  if (navigator.canShare && navigator.canShare({files:[file]})){ try { await navigator.share({files:[file]}); return true; } catch(e){ return e.name === 'AbortError' ? false : (msg('No se pudo compartir.'), false); } }
+  const a = document.createElement('a'); a.href = blobURL; a.download = fname; document.body.append(a); a.click(); a.remove(); return true;
+}
 $('#bShare').onclick = async () => {
   if (!blob) return;
   const dl = await dlP;
@@ -303,12 +324,12 @@ function open(){
   if (demo) msg('semilla de muestra · toca foto para sembrar la tuya', 4000);
 }
 function close(){ if (!isOpen) return; isOpen = false; $('#crear').hidden = true; $('#wSave').hidden = true; delete document.body.dataset.crear; }
-function verCrecer(){ if (dirty) compute(); close(); if (window.VISOR) window.VISOR.plantar(G.code, G.minute, !demo); }
+function verCrecer(){ if (dirty) compute(); close(); blob = null; if (window.CAPAS) window.CAPAS.lectura(); }
 $('#cClose').onclick = close;
 $('#bVer').onclick = verCrecer; $('#bVer2').onclick = verCrecer;
 
 /* ---------------- arranque ---------------- */
-window.XINAS = { open, close, grow, decode, encode, drawPlant, plantBox, get isOpen(){ return isOpen; }, get state(){ return S; }, get result(){ if (dirty) compute(); return G; } };
+window.XINAS = { open, close, loadFile, prepareBlob, saveTira, compute(){ if (dirty) compute(); return G; }, get demo(){ return demo; }, grow, decode, encode, drawPlant, plantBox, get isOpen(){ return isOpen; }, get state(){ return S; }, get result(){ if (dirty) compute(); return G; } };
 DEMO = makeDemo();
 syncAll();
 if (innerWidth <= 720){ $('#wLect').classList.add('min'); $('#wLect [data-min]').textContent = '+'; }
