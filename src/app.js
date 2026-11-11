@@ -1,21 +1,21 @@
-/* Xinas v0.3 · crear · foto → lecturas → código → planta procedural → tira térmica 58 mm con QR
+/* Xinas v0.4 · crear · retrato + instante → lecturas → código → planta → tira térmica 58 × 88 mm con QR
    Colección Alchemy of Meaning · Héctor Cruz Juárez · GPL-3.0 */
 (() => {
 'use strict';
 const $ = s => document.querySelector(s);
-const VER = '0.3';
-const { PW, DPMM, PHOTO_Y, QR_Y, QR_BOX } = window.Planta.TIRA;   // 384 puntos = 48 mm imprimibles a 203 dpi
+const VER = '0.4';
+const { PW, DPMM, PHOTO_Y, QR_Y, QR_BOX, H:TH } = window.Planta.TIRA;   // 384 puntos = 48 mm imprimibles a 203 dpi
 const D2R = Math.PI/180;
 const clamp = (v, a=0, b=1) => Math.min(b, Math.max(a, v));
 
 /* ---------------- estado ---------------- */
 const DEF = { zoom:1, cx:.5, cy:.5, exp:0, con:1.1, dit:'atkinson', mode:'multiply', mix:.6, sc2:1.6,
-  len:118, brote:.45, l1:'hectorcruz.com.mx', l2:'@hellohectorcruz', base:'https://hectorcruz.com.mx/app/xinas/',
-  salt:0, view:'tira', ui:'suave', age:1, born:null };
+  l1:'hectorcruz.com.mx', l2:'@hellohectorcruz', base:'https://hectorcruz.com.mx/app/xinas/',
+  ui:'suave', born:null, place:'', lat:null, lon:null };
 const S = Object.assign({}, DEF);
 try { Object.assign(S, JSON.parse(localStorage.getItem('xinas.v1') || localStorage.getItem('semilla.v1') || '{}')); } catch(e){}
 if (/hectorcruz\.com\.mx\/(semilla|xinas)\/?$/.test(S.base || '')) S.base = DEF.base;
-S.salt = S.salt || (Math.random()*65536)|0;
+for (const k of ['salt','len','brote','view','age']) delete S[k];
 const save = () => { try { const o = Object.assign({}, S); localStorage.setItem('xinas.v1', JSON.stringify(o)); } catch(e){} };
 
 let img1 = null, img2 = null, demo = true;
@@ -23,7 +23,7 @@ let G = null;          // resultado actual: {gray, bits, f, code, plant, tira, u
 let dirty = true;
 
 /* ---------------- núcleo compartido (planta.js) ---------------- */
-const { mulberry32, fnv, encode, decode, grow, plantBox, drawPlant, hexagram, dayIndex, TIRA, qrGeom } = window.Planta;
+const { mulberry32, fnv, encode, decode, grow, plantBox, drawPlant, hexagram, minuteIndex, momentBytes, TIRA, qrGeom } = window.Planta;
 const { add, mul } = window.Planta.vec;
 function msg(t, ms=1800){ const m = $('#msg'); if (!t){ m.hidden = true; return; } m.textContent = t; m.hidden = false; clearTimeout(msg.t); if (ms) msg.t = setTimeout(() => m.hidden = true, ms); }
 
@@ -91,49 +91,50 @@ function dither(g, w, h, how){
 /* ---------------- la tira ---------------- */
 const FONT = px => `${px}px Silkscreen, Menlo, monospace`;
 function fitText(x, t, maxW, px){ while (px > 8){ x.font = FONT(px); if (x.measureText(t).width <= maxW) break; px -= 8; } x.font = FONT(px); return px; }
-function qrURL(code, day){ let b = (S.base || '').trim() || DEF.base; if (!/^https?:\/\//i.test(b)) b = 'https://' + b; return b + (b.includes('?') ? '&' : '?') + 's=' + code + '&t=' + day.toString(36); }
-function fmtDate(d){ const p = n => String(n).padStart(2, '0'); return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}`; }
+function qrURL(code, minute){ let b = (S.base || '').trim() || DEF.base; if (!/^https?:\/\//i.test(b)) b = 'https://' + b; return b + (b.includes('?') ? '&' : '?') + 's=' + code + '&t=' + minute.toString(36); }
+const p2 = n => String(n).padStart(2, '0');
+function fmtDate(d){ return `${p2(d.getDate())}.${p2(d.getMonth()+1)}.${d.getFullYear()}`; }
+function fmtTime(d){ return `${p2(d.getHours())}:${p2(d.getMinutes())}`; }
 
 function renderTira(bits, code, plant, url){
-  const H = Math.round(S.len*DPMM), c = document.createElement('canvas'); c.width = PW; c.height = H;
+  const H = TH, c = document.createElement('canvas'); c.width = PW; c.height = H;
   const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, PW, H); x.fillStyle = '#000'; x.textBaseline = 'top';
   // encabezado
-  x.font = FONT(16); x.textAlign = 'left'; x.fillText('XINAS', 8, 8);
-  x.textAlign = 'right'; x.fillText('Nº ' + code.slice(0, 4), PW - 8, 8);
-  // QR
-  let qn = 0;
+  x.font = FONT(16); x.textAlign = 'left'; x.fillText('XINAS', 6, 6);
+  x.textAlign = 'right'; x.fillText('Nº ' + code.slice(0, 4), PW - 6, 6);
+  // QR (margen de 2 módulos: a su derecha va la columna de texto)
   try {
-    const q = qrcode(0, 'M'); q.addData(url); q.make(); qn = q.getModuleCount();
-    const g = qrGeom(qn), m = g.m;
+    const q = qrcode(0, 'M'); q.addData(url); q.make(); const qn = q.getModuleCount(), g = qrGeom(qn), m = g.m;
     for (let r=0;r<qn;r++) for (let k=0;k<qn;k++) if (q.isDark(r, k)) x.fillRect(g.x + k*m, g.y + r*m, m, m);
     S._qr = {n:qn, m, mm:(m*qn/DPMM).toFixed(1)};
   } catch(e){ S._qr = null; }
-  // columna de texto
-  const tx = QR_BOX + 12, now = S.born ? new Date(S.born) : new Date();
+  // columna: nº, instante, lugar, hexagrama
+  const tx = QR_BOX + 12, tw = PW - tx - 6, when = S.born ? new Date(S.born) : new Date();
   x.textAlign = 'left'; x.font = FONT(16);
-  const col = ['nº', code.slice(0,4), code.slice(4,8), code.slice(8), '', 'sembrada', fmtDate(now).slice(0,6) + fmtDate(now).slice(8)];
-  col.forEach((t, i) => t && x.fillText(t, tx, QR_Y + 10 + i*20));
-  // hexagrama: líneas de abajo hacia arriba
-  const hx = hexagram(plant.f), hy = QR_Y + 10 + 7*20 + 8, lw = 64;
-  for (let i=0;i<6;i++){ const yy = hy + (5 - i)*9; if (hx.lines[i]) x.fillRect(tx, yy, lw, 5); else { x.fillRect(tx, yy, 28, 5); x.fillRect(tx + 36, yy, 28, 5); } }
-  x.fillText(String(hx.n), tx + lw + 10, hy + 18);
-  // brote: la raíz nace en un punto fijo respecto al QR (el visor AR la hace crecer desde ahí)
-  const RX = TIRA.ROOT_X, gy = TIRA.ROOT_Y, top = QR_Y + QR_BOX + 14, bot = H - 82;
-  const bb = plantBox(plant, S.brote, 0), ph = Math.max(.05, bb.y1), rd = Math.max(.02, -bb.y0), hw = Math.max(.05, -bb.x0, bb.x1);
-  const sc = Math.min((gy - top)/ph, (bot - gy)/rd, (PW/2 - 16)/hw, 320);
-  for (let xx=8; xx<PW-8; xx+=6) x.fillRect(xx, gy, 3, 2);
-  drawPlant(x, plant, S.brote, {ox:RX, oy:gy, s:sc, rot:0, col:'#000', lw:3, min:2, fillLeaves:true, dimRoots:1});
+  [code.slice(0,4), code.slice(4,8), code.slice(8)].forEach((t, i) => x.fillText(t, tx, QR_Y + 4 + i*18));
+  x.fillText(fmtDate(when).slice(0,6) + fmtDate(when).slice(8), tx, QR_Y + 66);
+  x.fillText(fmtTime(when), tx, QR_Y + 84);
+  const place = (S.place || '').trim();
+  if (place){ x.font = FONT(8); const words = place.split(/\s+/); let line = '', ln = 0;
+    for (const w of words){ const tst = line ? line + ' ' + w : w; if (x.measureText(tst).width > tw && line){ x.fillText(line, tx, QR_Y + 106 + ln*10); ln++; line = w; if (ln > 2) break; } else line = tst; }
+    if (ln <= 2 && line) x.fillText(line, tx, QR_Y + 106 + ln*10); }
+  const hx = hexagram(plant.f), hy = QR_Y + 146, lw = 56;
+  for (let i=0;i<6;i++){ const yy = hy + (5 - i)*8; if (hx.lines[i]) x.fillRect(tx, yy, lw, 4); else { x.fillRect(tx, yy, 24, 4); x.fillRect(tx + 32, yy, 24, 4); } }
+  x.font = FONT(16); x.fillText(String(hx.n), tx + lw + 10, hy + 14);
   // pie
   x.textAlign = 'center';
   const l1 = (S.l1 || '').trim(), l2 = (S.l2 || '').trim();
-  if (l1){ fitText(x, l1, PW - 16, 16); x.fillText(l1, PW/2, H - 66); }
-  if (l2){ fitText(x, l2, PW - 16, 16); x.fillText(l2, PW/2, H - 44); }
-  x.font = FONT(8); x.fillText('ALCHEMY OF MEANING', PW/2, H - 16);
-  // a 1 bit todo lo que no es foto
+  if (l1){ fitText(x, l1, PW - 12, 16); x.fillText(l1, PW/2, H - 66); }
+  if (l2){ fitText(x, l2, PW - 12, 16); x.fillText(l2, PW/2, H - 46); }
+  x.font = FONT(8); x.fillText('ALCHEMY OF MEANING', PW/2, H - 20);
+  // a 1 bit todo lo que no es foto; luego el retrato tramado
   const id = x.getImageData(0, 0, PW, H), d = id.data;
   for (let i=0;i<PW*H;i++){ const v = d[i*4] < 150 ? 0 : 255; d[i*4] = d[i*4+1] = d[i*4+2] = v; d[i*4+3] = 255; }
   for (let y=0;y<PW;y++) for (let k=0;k<PW;k++){ const i = ((PHOTO_Y + y)*PW + k)*4, v = bits[y*PW + k] ? 255 : 0; d[i] = d[i+1] = d[i+2] = v; }
   x.putImageData(id, 0, 0);
+  // la semilla: punto donde brota la planta, al pie del retrato
+  x.fillStyle = '#fff'; x.beginPath(); x.arc(TIRA.ROOT_X, TIRA.ROOT_Y, 6, 0, 7); x.fill();
+  x.fillStyle = '#000'; x.beginPath(); x.arc(TIRA.ROOT_X, TIRA.ROOT_Y, 3, 0, 7); x.fill();
   return c;
 }
 
@@ -142,12 +143,12 @@ let DEMO = null;
 function compute(){
   const g = compose(PW), f = features(g, PW);
   const q = [f.b, f.c, f.e, f.a, f.x, f.y].map(v => Math.round(clamp(v)*255));
-  const bytes = [...q, (S.salt >> 8) & 255, S.salt & 255], code = encode(bytes);
+  const minute = minuteIndex(S.born || Date.now());
+  const bytes = [...q, ...momentBytes(minute, S.lat, S.lon)], code = encode(bytes);
   const plant = grow(decode(code));
-  const born = S.born ? new Date(S.born) : new Date();
-  const url = qrURL(code, dayIndex(born));
+  const url = qrURL(code, minute);
   const bits = dither(g, PW, PW, S.dit);
-  G = { g, f, code, plant, url, bits, tira: renderTira(bits, code, plant, url) };
+  G = { g, f, code, plant, url, bits, minute, tira: renderTira(bits, code, plant, url) };
   showReadings();
   dirty = false;
 }
@@ -160,7 +161,11 @@ function showReadings(){
   const hx = hexagram(G.f);
   $('#lPlant').textContent = `${P.levels + 1} niveles · ${P.orn} · giro ${Math.round(P.twist/D2R)}° · hexagrama ${hx.n}, ${hx.name}`;
   const q = S._qr; $('#lQR').textContent = q ? `QR ${q.n}×${q.n} módulos · ${q.m} px por módulo · ${q.mm} mm · ${G.url.length} caracteres` : 'el enlace es demasiado largo para el QR';
-  $('#cTR').textContent = `${PW} × ${Math.round(S.len*DPMM)} px · 58 × ${S.len} mm`;
+  $('#cTR').textContent = `${PW} × ${TH} px · 58 × ${TH/DPMM} mm`;
+  const w = S.born ? new Date(S.born) : new Date();
+  $('#lWhen').textContent = `${fmtDate(w)} · ${fmtTime(w)}` + (S.lat != null ? ` · ${S.lat.toFixed(2)}, ${S.lon.toFixed(2)}` : '');
+  $('#oWhen').textContent = `${fmtDate(w)} · ${fmtTime(w)}`;
+  $('#oGeo').textContent = S.lat != null ? `${S.lat.toFixed(2)}, ${S.lon.toFixed(2)}` : 'sin ubicación';
 }
 
 /* ---------------- dibujo en pantalla ---------------- */
@@ -213,7 +218,7 @@ async function loadImg(file){
 }
 $('#f1').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try { img1 = await loadImg(f); demo = false; S.zoom = 1; S.cx = S.cy = .5; S.salt = (Math.random()*65536)|0; S.born = Date.now(); syncAll(); dirty = true; save(); msg('semilla nueva'); }
+  try { img1 = await loadImg(f); demo = false; S.zoom = 1; S.cx = S.cy = .5; S.born = (f.lastModified && Date.now() - f.lastModified < 30*864e5) ? f.lastModified : Date.now(); syncAll(); dirty = true; save(); msg('semilla nueva'); }
   catch(err){ msg('No se pudo abrir esa imagen.'); }
 };
 $('#f2').onchange = async e => {
@@ -223,12 +228,19 @@ $('#f2').onchange = async e => {
 $('#bFoto').onclick = () => $('#f1').click();
 $('#b2').onclick = () => $('#f2').click();
 $('#b2x').onclick = () => { img2 = null; $('#b2x').disabled = true; dirty = true; };
-$('#bSalt').onclick = () => { S.salt = (Math.random()*65536)|0; dirty = true; save(); msg('otra semilla'); };
+$('#bNow').onclick = () => { S.born = Date.now(); dirty = true; save(); msg('instante: ahora'); };
+$('#bGeo').onclick = () => {
+  if (!navigator.geolocation){ msg('Este navegador no da la ubicación.'); return; }
+  msg('buscando ubicación…', 0);
+  navigator.geolocation.getCurrentPosition(p => { S.lat = Math.round(p.coords.latitude*100)/100; S.lon = Math.round(p.coords.longitude*100)/100; dirty = true; save(); msg('ubicación aproximada (~1 km)'); },
+    () => msg('Sin permiso de ubicación. Puedes escribir el lugar.', 3500), { enableHighAccuracy:false, timeout:10000, maximumAge:600000 });
+};
+$('#bGeoX').onclick = () => { S.lat = S.lon = null; dirty = true; save(); };
 
 /* ---------------- controles ---------------- */
 function syncRange(r){ r.style.setProperty('--p', ((r.value - r.min)/(r.max - r.min)*100) + '%'); }
 const RANGES = { sZoom:['zoom', v => v.toFixed(2) + '×'], sExp:['exp', v => (v > 0 ? '+' : '') + v.toFixed(2)], sCon:['con', v => v.toFixed(2)],
-  sMix:['mix', v => Math.round(v*100) + '%'], sSc2:['sc2', v => v.toFixed(2) + '×'], sLen:['len', v => v + ' mm'], sBrote:['brote', v => Math.round(v*100) + '%'] };
+  sMix:['mix', v => Math.round(v*100) + '%'], sSc2:['sc2', v => v.toFixed(2) + '×'] };
 for (const [id, [k, fmt]] of Object.entries(RANGES)){
   const r = $('#' + id), o = $('#o' + id.slice(1));
   r.oninput = () => { S[k] = +r.value; o.textContent = fmt(S[k]); syncRange(r); dirty = true; };
@@ -240,12 +252,12 @@ function segGroup(id, key, after){
 }
 function syncSeg(g, v){ g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); }
 segGroup('gDit', 'dit'); segGroup('gMode', 'mode'); segGroup('gCon', 'ui', applyUI);
-for (const [id, k] of [['tL1','l1'], ['tL2','l2'], ['tBase','base']]){ const i = $('#' + id); i.oninput = () => { S[k] = i.value; dirty = true; }; i.onchange = save; }
+for (const [id, k] of [['tL1','l1'], ['tL2','l2'], ['tBase','base'], ['tPlace','place']]){ const i = $('#' + id); i.oninput = () => { S[k] = i.value; dirty = true; }; i.onchange = save; }
 function applyUI(){ document.documentElement.dataset.contrast = S.ui === 'alto' ? 'alto' : ''; }
 function syncAll(){
   for (const [id, [k, fmt]] of Object.entries(RANGES)){ const r = $('#' + id); r.value = S[k]; $('#o' + id.slice(1)).textContent = fmt(+S[k]); syncRange(r); }
   syncSeg($('#gDit'), S.dit); syncSeg($('#gMode'), S.mode); syncSeg($('#gCon'), S.ui);
-  $('#tL1').value = S.l1; $('#tL2').value = S.l2; $('#tBase').value = S.base; applyUI();
+  $('#tL1').value = S.l1; $('#tL2').value = S.l2; $('#tBase').value = S.base; $('#tPlace').value = S.place || ''; applyUI();
 }
 
 const toggleAj = (on = $('#wAj').hidden) => { $('#wAj').hidden = !on; $('#bAj').setAttribute('aria-pressed', String(on)); };
@@ -270,7 +282,7 @@ $('#bSave').onclick = async () => {
   if (blobURL) URL.revokeObjectURL(blobURL); blobURL = URL.createObjectURL(blob);
   fname = `xinas-${G.code}.png`;
   $('#saveImg').src = blobURL;
-  $('#saveInfo').textContent = `${G.tira.width} × ${G.tira.height} px · 58 × ${S.len} mm · 1 bit · ${(blob.size/1024).toFixed(0)} KB`;
+  $('#saveInfo').textContent = `${G.tira.width} × ${G.tira.height} px · 58 × ${TH/DPMM} mm · 1 bit · ${(blob.size/1024).toFixed(0)} KB`;
   $('#wSave').hidden = false;
 };
 $('#xSave').onclick = () => $('#wSave').hidden = true;
@@ -284,14 +296,14 @@ $('#bShare').onclick = async () => {
 };
 
 /* ---------------- abrir / cerrar dentro del visor ---------------- */
-function bornDay(){ return dayIndex(S.born ? new Date(S.born) : new Date()); }
+function bornMinute(){ return minuteIndex(S.born || Date.now()); }
 function open(){
   if (isOpen) return; isOpen = true; $('#crear').hidden = false; document.body.dataset.crear = '1'; resize();
   dirty = true; requestAnimationFrame(frame);
   if (demo) msg('semilla de muestra · toca foto para sembrar la tuya', 4000);
 }
 function close(){ if (!isOpen) return; isOpen = false; $('#crear').hidden = true; $('#wSave').hidden = true; delete document.body.dataset.crear; }
-function verCrecer(){ if (dirty) compute(); close(); if (window.VISOR) window.VISOR.plantar(G.code, bornDay(), !demo); }
+function verCrecer(){ if (dirty) compute(); close(); if (window.VISOR) window.VISOR.plantar(G.code, G.minute, !demo); }
 $('#cClose').onclick = close;
 $('#bVer').onclick = verCrecer; $('#bVer2').onclick = verCrecer;
 

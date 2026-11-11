@@ -151,26 +151,49 @@ function hexagram(f){
 }
 
 /* ---------------- tiempo ----------------
-   Día 0 = el brote impreso; madura con los días (la mitad del camino en ~2 semanas). */
+   El instante se guarda en minutos desde 2026-01-01 (UTC). Día 0 = el retrato;
+   la planta madura con los días (la mitad del camino en ~2 semanas). */
 const EPOCH = Date.UTC(2026, 0, 1);
 function dayIndex(d){ return Math.floor((Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) - EPOCH)/864e5); }
+function minuteIndex(ms){ return Math.floor((ms - EPOCH)/6e4); }
+function minuteToDate(m){ return new Date(EPOCH + m*6e4); }
 function ageFromDays(days, brote = .45){ return clamp(brote + (1 - brote)*(1 - Math.exp(-Math.max(0, days)/21))); }
 const ETAPAS = [[.08,'semilla'],[.3,'raíz'],[.45,'brote'],[.6,'tallo'],[.75,'ramas'],[.9,'hojas'],[1.01,'flor']];
 function stage(age, orn){ for (const [k, n] of ETAPAS) if (age < k) return n === 'flor' ? (orn === 'flor' ? 'flor' : orn === 'hoja' ? 'follaje' : 'yemas') : n; return 'plenitud'; }
 
-/* ---------------- la tira (v1) ----------------
-   Medidas en puntos de 203 dpi (8 por mm). El brote impreso nace en ROOT, a distancia fija del QR,
-   para que el visor AR haga brotar la planta en el mismo lugar del papel. */
-const TIRA = { PW:384, DPMM:8, PHOTO_Y:32, QR_Y:428, QR_BOX:208, ROOT_X:192, ROOT_Y:776, LEN_MIN:110, LEN_MAX:150 };
-function qrGeom(n){ const m = Math.floor(TIRA.QR_BOX/(n + 8)), off = Math.floor((TIRA.QR_BOX - m*(n + 8))/2) + 4*m; return { m, x:off, y:TIRA.QR_Y + off, size:m*n }; }
+/* ---------------- el instante ----------------
+   Los bytes 6 y 7 de la semilla salen del minuto y del lugar (redondeado a ~1 km).
+   Misma foto en otro momento u otro lugar → otra planta. */
+function momentBytes(minute, lat, lon){
+  const s = `${minute}|${lat == null ? '-' : lat.toFixed(2)}|${lon == null ? '-' : lon.toFixed(2)}`;
+  const h = fnv(Array.from(s, c => c.charCodeAt(0) & 255)); return [(h >>> 8) & 255, h & 255];
+}
+
+/* ---------------- color ----------------
+   Paleta coseno (a + b·cos(2π(c·t + d))) que sale de la semilla: cada planta tiene sus tonos.
+   El visor la recorre con el ángulo de la mirada para el brillo iridiscente. */
+function palette(bytes){
+  const r = mulberry32(fnv(bytes) ^ 0x9e3779b9), base = bytes[0]/255*.35 + bytes[3]/255*.65;
+  return { a:[.55, .55, .6], b:[.45, .45, .4], c:[1, 1, 1], d:[base, base + .18 + r()*.2, base + .42 + r()*.25], span:.5 + bytes[1]/255*.6 };
+}
+function paletteRGB(P, t){ return [0,1,2].map(i => clamp(P.a[i] + P.b[i]*Math.cos(6.28318*(P.c[i]*t + P.d[i])))); }
+
+/* ---------------- la tira (v2: 58 × 88 mm) ----------------
+   Medidas en puntos de 203 dpi (8 por mm). La planta brota del retrato: su raíz está
+   en ROOT, abajo al centro de la foto; el visor AR la ancla ahí a partir del QR. */
+const TIRA = { V:2, PW:384, DPMM:8, H:704, PHOTO_Y:28, PHOTO:384, QR_Y:420, QR_BOX:200, QUIET:2, ROOT_X:192, ROOT_Y:396 };
+function qrGeom(n){ const q = TIRA.QUIET, m = Math.floor(TIRA.QR_BOX/(n + 2*q)), off = Math.floor((TIRA.QR_BOX - m*(n + 2*q))/2) + q*m; return { m, x:off, y:TIRA.QR_Y + off, size:m*n }; }
 /* raíz relativa a la esquina superior izquierda del QR, en mm; y lado del QR en mm */
 function anchorMM(n){ const g = qrGeom(n); return { x:(TIRA.ROOT_X - g.x)/TIRA.DPMM, y:(TIRA.ROOT_Y - g.y)/TIRA.DPMM, side:g.size/TIRA.DPMM }; }
 function fromCode(code){ const b = decode(code); return b ? grow(b) : null; }
+/* ?s=CÓDIGO&t=MINUTO (base 36). Si t es corto (≤ 3 caracteres) es un día, como en la tira v1. */
 function parseURL(href){
   try { const u = new URL(href); const s = (u.searchParams.get('s') || '').trim().toUpperCase(), t = u.searchParams.get('t');
-    if (!/^[0-9A-HJKMNP-TV-Z]{13}$/.test(s)) return null; return { code:s, day:t ? parseInt(t, 36) : null }; } catch(e){ return null; }
+    if (!/^[0-9A-HJKMNP-TV-Z]{13}$/.test(s)) return null;
+    let minute = null; if (t){ const v = parseInt(t, 36); if (!isNaN(v)) minute = t.length <= 3 ? v*1440 : v; }
+    return { code:s, minute }; } catch(e){ return null; }
 }
 
-G.Planta = { VERSION:'1', clamp, mulberry32, fnv, encode, decode, grow, fromCode, plantBox, drawPlant, hexagram, dayIndex, ageFromDays, stage, TIRA, qrGeom, anchorMM, parseURL,
+G.Planta = { VERSION:'2', clamp, mulberry32, fnv, encode, decode, grow, fromCode, plantBox, drawPlant, hexagram, dayIndex, minuteIndex, minuteToDate, ageFromDays, stage, momentBytes, palette, paletteRGB, TIRA, qrGeom, anchorMM, parseURL,
   vec:{ add, mul, dot, cross, norm, rotate, perp } };
 })(typeof window !== 'undefined' ? window : globalThis);

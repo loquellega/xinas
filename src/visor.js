@@ -1,4 +1,4 @@
-/* Xinas · visor AR v0.2 (base de la app; «crear» abre el editor de tira)
+/* Xinas · visor AR v0.4 (base de la app; «crear» abre el editor de tira) — plantas luminosas e iridiscentes
    Lee ?s=CÓDIGO&t=DÍA, reconstruye la planta con planta.js y la hace crecer:
    en jardín (pantalla) o sobre la tira impresa (cámara + QR como marcador).
    Colección Alchemy of Meaning · Héctor Cruz Juárez · GPL-3.0 */
@@ -6,13 +6,13 @@ import * as THREE from 'three';
 import jsQR from 'jsqr';
 
 const P = window.Planta, $ = s => document.querySelector(s), clamp = P.clamp;
-const VER = '0.2';
+const VER = '0.4';
 
 /* ---------------- semilla ---------------- */
 const DEMO = 'FECN70WHGWZBY';
 let seed = P.parseURL(location.href) || P.parseURL(location.origin + '/?' + (location.hash || '').slice(1));
 const fromLink = !!seed;
-if (!seed) seed = { code:DEMO, day:P.dayIndex(new Date()) };
+if (!seed) seed = { code:DEMO, minute:P.minuteIndex(Date.now()) };
 let plant, hex, daysOld, ageNow, ageShown = .45, ageFrom = .45, ageT0 = 0, extraDays = 0, unitMM = 1;
 
 const STORY = {
@@ -34,32 +34,90 @@ const cam = new THREE.PerspectiveCamera(40, 1, 1, 5000);
 const marker = new THREE.Group(); marker.matrixAutoUpdate = false; scene.add(marker);
 const garden = new THREE.Group(); scene.add(garden);
 const holder = new THREE.Group();   // la planta: y hacia arriba, unidades en mm
-const matInk = new THREE.MeshBasicMaterial({ color:0xeeeeee, side:THREE.DoubleSide });
-const matRoot = new THREE.MeshBasicMaterial({ color:0x8f8f8f, side:THREE.DoubleSide, transparent:true, opacity:.6 });
+/* luz iridiscente: el color recorre la paleta de la semilla según el ángulo de la mirada (película fina) */
+const IRID_V = `
+  varying vec3 vN; varying vec3 vV; varying float vH;
+  void main(){
+    mat4 im = mat4(1.0);
+    #ifdef USE_INSTANCING
+      im = instanceMatrix;
+    #endif
+    vec4 lp = im*vec4(position, 1.0); vH = lp.y;
+    vec4 wp = modelMatrix*lp;
+    vN = normalize(mat3(modelMatrix)*mat3(im)*normal);
+    vV = normalize(cameraPosition - wp.xyz);
+    gl_Position = projectionMatrix*viewMatrix*wp;
+  }`;
+const IRID_F = `
+  uniform vec3 uA, uB, uC, uD; uniform float uSpan, uOff, uGain, uAlpha, uTime, uH, uRim;
+  varying vec3 vN; varying vec3 vV; varying float vH;
+  vec3 pal(float t){ return uA + uB*cos(6.28318*(uC*t + uD)); }
+  void main(){
+    float f = 1.0 - abs(dot(normalize(vN), normalize(vV)));
+    vec3 c = pal(uOff + f*uSpan + vH*uH + uTime*.025);
+    c *= uGain*(1.0 - uRim + uRim*(.35 + 1.4*pow(f, 1.6)));
+    gl_FragColor = vec4(c, uAlpha);
+  }`;
+function irid(o){
+  return new THREE.ShaderMaterial({ vertexShader:IRID_V, fragmentShader:IRID_F, side:THREE.DoubleSide, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+    uniforms:{ uA:{value:new THREE.Vector3()}, uB:{value:new THREE.Vector3()}, uC:{value:new THREE.Vector3()}, uD:{value:new THREE.Vector3()},
+      uSpan:{value:o.span ?? .6}, uOff:{value:o.off ?? 0}, uGain:{value:o.gain ?? 1}, uAlpha:{value:o.alpha ?? 1}, uTime:{value:0}, uH:{value:o.h ?? .35}, uRim:{value:o.rim ?? .7} } });
+}
+const matStem = irid({ span:.35, gain:1.05, rim:.4, h:.5 }), matHalo = irid({ span:.3, gain:.9, alpha:.16, rim:1, h:.5, off:.08 });
+const matLeaf = irid({ span:.9, gain:.95, alpha:.8, rim:.85, off:.25 }), matBud = irid({ span:.2, gain:1.6, rim:.2, off:.5 });
+const matRoot = irid({ span:.25, gain:.5, alpha:.55, rim:.5, off:.65 });
+const MATS = [matStem, matHalo, matLeaf, matBud, matRoot];
+function setPalette(Pal){ for (const m of MATS){ const u = m.uniforms; u.uA.value.fromArray(Pal.a); u.uB.value.fromArray(Pal.b); u.uC.value.fromArray(Pal.c); u.uD.value.fromArray(Pal.d); } }
+
+/* polen y destellos: puntos suaves que flotan */
+const DOT_V = `attribute float aK; uniform float uSize, uPR; varying float vK;
+  void main(){ vK = aK; vec4 mv = modelViewMatrix*vec4(position, 1.0); gl_PointSize = min(uSize*uPR*(220.0/max(20.0, -mv.z))*(.6 + .8*fract(aK*7.13)), uSize*uPR*1.6); gl_Position = projectionMatrix*mv; }`;
+const DOT_F = `uniform vec3 uA, uB, uC, uD; uniform float uAlpha, uTime; varying float vK;
+  vec3 pal(float t){ return uA + uB*cos(6.28318*(uC*t + uD)); }
+  void main(){ float d = length(gl_PointCoord - .5); float a = smoothstep(.5, .0, d); a *= a;
+    gl_FragColor = vec4(pal(vK + uTime*.04)*1.3, a*uAlpha); }`;
+function dots(size, alpha){ return new THREE.ShaderMaterial({ vertexShader:DOT_V, fragmentShader:DOT_F, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+  uniforms:{ uA:{value:new THREE.Vector3()}, uB:{value:new THREE.Vector3()}, uC:{value:new THREE.Vector3()}, uD:{value:new THREE.Vector3()}, uSize:{value:size}, uPR:{value:Math.min(devicePixelRatio || 1, 2)}, uAlpha:{value:alpha}, uTime:{value:0} } }); }
+const matPollen = dots(5, .75), matSpark = dots(26, .9);
+MATS.push(matPollen, matSpark);
+let pollen, spark, pollenSeed = [];
 
 const cyl = new THREE.CylinderGeometry(1, 1, 1, 6, 1, true);
 const leafShape = new THREE.Shape(); leafShape.moveTo(0, 0); leafShape.quadraticCurveTo(.34, .5, 0, 1); leafShape.quadraticCurveTo(-.34, .5, 0, 0);
 const leafGeo = new THREE.ShapeGeometry(leafShape, 6);
 const ball = new THREE.IcosahedronGeometry(1, 1);
-let mSeg, mRoot, mLeaf, mBall;
+let mSeg, mHalo, mRoot, mLeaf, mBall;
 
 const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _p = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
 const V = a => new THREE.Vector3(a[0], a[1], a[2]);
 
 function build(){
   plant = P.fromCode(seed.code); hex = P.hexagram(plant.f);
-  for (const m of [mSeg, mRoot, mLeaf, mBall]) if (m){ holder.remove(m); m.dispose(); }
+  for (const m of [mSeg, mHalo, mRoot, mLeaf, mBall, pollen, spark]) if (m){ holder.remove(m); if (m.dispose) m.dispose(); else m.geometry.dispose(); }
+  const bytes = P.decode(seed.code), Pal = P.palette(bytes); setPalette(Pal);
+  const gc = P.paletteRGB(Pal, .1); groundMat.color.setRGB(gc[0]*.35, gc[1]*.35, gc[2]*.35);
+  matLeaf.uniforms.uSpan.value = .55 + Pal.span*.6; matStem.uniforms.uSpan.value = .25 + Pal.span*.25;
   const nPet = plant.tips.length*(plant.P.petals + 1);
-  mSeg = new THREE.InstancedMesh(cyl, matInk, plant.segs.length);
+  mSeg = new THREE.InstancedMesh(cyl, matStem, plant.segs.length);
+  mHalo = new THREE.InstancedMesh(cyl, matHalo, plant.segs.length);
   mRoot = new THREE.InstancedMesh(cyl, matRoot, plant.roots.length);
-  mLeaf = new THREE.InstancedMesh(leafGeo, matInk, plant.leaves.length + nPet);
-  mBall = new THREE.InstancedMesh(ball, matInk, plant.tips.length*2);
-  for (const m of [mSeg, mRoot, mLeaf, mBall]){ m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; holder.add(m); }
+  mLeaf = new THREE.InstancedMesh(leafGeo, matLeaf, plant.leaves.length + nPet);
+  mBall = new THREE.InstancedMesh(ball, matBud, plant.tips.length*2);
+  mRoot.renderOrder = 0; mHalo.renderOrder = 1; mSeg.renderOrder = 2; mLeaf.renderOrder = 3; mBall.renderOrder = 4;
+  for (const m of [mSeg, mHalo, mRoot, mLeaf, mBall]){ m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; holder.add(m); }
+  // polen: nace alrededor de la planta adulta y sube despacio
+  const bb1 = P.plantBox(plant, 1, 0), rng = P.mulberry32(P.fnv(bytes) ^ 77), NP = 140;
+  const pg = new THREE.BufferGeometry(), pp = new Float32Array(NP*3), pk = new Float32Array(NP); pollenSeed = [];
+  for (let i=0;i<NP;i++){ const r = Math.sqrt(rng())*Math.max(.3, (bb1.x1 - bb1.x0)*.7), an = rng()*6.283; pollenSeed.push([Math.cos(an)*r, rng()*bb1.y1*1.15, Math.sin(an)*r, rng()]); pk[i] = rng(); }
+  pg.setAttribute('position', new THREE.BufferAttribute(pp, 3)); pg.setAttribute('aK', new THREE.BufferAttribute(pk, 1));
+  pollen = new THREE.Points(pg, matPollen); pollen.frustumCulled = false; pollen.renderOrder = 5; holder.add(pollen);
+  const sg = new THREE.BufferGeometry(), NS = plant.tips.length + plant.leaves.length;
+  sg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(NS*3), 3)); sg.setAttribute('aK', new THREE.BufferAttribute(Float32Array.from({length:NS}, (_, i) => (i*.137) % 1), 1));
+  spark = new THREE.Points(sg, matSpark); spark.frustumCulled = false; spark.renderOrder = 6; holder.add(spark);
   // escala: la planta adulta mide ~85 mm sobre la tira
-  const bb = P.plantBox(plant, 1, 0); unitMM = 85/Math.max(.3, bb.y1);
+  const bb = P.plantBox(plant, 1, 0); unitMM = 70/Math.max(.3, bb.y1);
   holder.scale.setScalar(unitMM);
-  const today = P.dayIndex(new Date());
-  daysOld = seed.day == null ? 0 : Math.max(0, today - seed.day);
+  daysOld = seed.minute == null ? 0 : Math.max(0, (P.minuteIndex(Date.now()) - seed.minute)/1440);
   setAgeTarget(true);
   showInfo();
 }
@@ -81,8 +139,8 @@ function pose(age){
   let n = 0;
   for (const g of plant.segs){ if (g.t0 >= age) continue; const fr = clamp((age - g.t0)/(g.t1 - g.t0));
     const b = [g.a[0] + (g.b[0]-g.a[0])*fr, g.a[1] + (g.b[1]-g.a[1])*fr, g.a[2] + (g.b[2]-g.a[2])*fr];
-    rod(g.a, b, Math.max(.22*mm, R*Math.pow(.68, g.d)), mSeg, n++); }
-  mSeg.count = n; n = 0;
+    const rr = Math.max(.22*mm, R*Math.pow(.68, g.d)); rod(g.a, b, rr*3.2, mHalo, n); rod(g.a, b, rr, mSeg, n++); }
+  mSeg.count = mHalo.count = n; n = 0;
   for (const r of plant.roots){ if (r.t0 >= age) continue; const fr = clamp((age - r.t0)/(r.t1 - r.t0));
     rod(r.a, [r.a[0] + (r.b[0]-r.a[0])*fr, r.a[1] + (r.b[1]-r.a[1])*fr, r.a[2] + (r.b[2]-r.a[2])*fr], .3*mm, mRoot, n++); }
   mRoot.count = n; n = 0; let nb = 0;
@@ -98,15 +156,22 @@ function pose(age){
     } else { _m.compose(V(t.p), _q.identity(), _s.setScalar(Math.max(.4*mm, r*.2))); mBall.setMatrixAt(nb++, _m); }
   }
   mLeaf.count = n; mBall.count = nb;
-  for (const m of [mSeg, mRoot, mLeaf, mBall]) m.instanceMatrix.needsUpdate = true;
+  for (const m of [mSeg, mHalo, mRoot, mLeaf, mBall]) m.instanceMatrix.needsUpdate = true;
+  // destellos en yemas, flores y puntas de hoja
+  const sp = spark.geometry.attributes.position; let ns = 0;
+  for (const t of plant.tips){ if (t.t >= age) continue; sp.setXYZ(ns++, t.p[0], t.p[1], t.p[2]); }
+  for (const l of plant.leaves){ if (l.t + .06 >= age || l.coty) continue; const g = clamp((age - l.t)/.08); sp.setXYZ(ns++, l.p[0] + l.d[0]*l.s*g, l.p[1] + l.d[1]*l.s*g, l.p[2] + l.d[2]*l.s*g); }
+  spark.geometry.setDrawRange(0, ns); sp.needsUpdate = true;
 }
 
 /* ---------------- información ---------------- */
+function fmtMinute(m){ if (m == null) return '—'; const t = P.minuteToDate(m), p = n => String(n).padStart(2, '0'); return `${p(t.getDate())}.${p(t.getMonth()+1)}.${t.getFullYear()} · ${p(t.getHours())}:${p(t.getMinutes())}`; }
 function fmtDay(d){ if (d == null) return '—'; const t = new Date(Date.UTC(2026, 0, 1) + d*864e5); return `${String(t.getUTCDate()).padStart(2,'0')}.${String(t.getUTCMonth()+1).padStart(2,'0')}.${t.getUTCFullYear()}`; }
 function showInfo(){
   $('#iCode').textContent = $('#hCode').textContent = seed.code.slice(0,4) + ' ' + seed.code.slice(4,8) + ' ' + seed.code.slice(8);
-  $('#iBorn').textContent = fmtDay(seed.day);
-  $('#iDays').textContent = (daysOld + extraDays) + (extraDays ? ` (${daysOld} + ${extraDays})` : '');
+  $('#iBorn').textContent = fmtMinute(seed.minute);
+  const dd = Math.floor(daysOld);
+  $('#iDays').textContent = (dd + extraDays) + (extraDays ? ` (${dd} + ${extraDays})` : '');
   const hx = $('#iHex'); hx.innerHTML = '';
   for (let i=5;i>=0;i--){ const r = document.createElement('i'); r.className = hex.lines[i] ? 'y' : 'n'; hx.append(r); }
   $('#iHexN').textContent = `${hex.n} · ${hex.name}`;
@@ -120,9 +185,10 @@ function showStage(age){
 
 /* ---------------- jardín (sin cámara) ---------------- */
 let orbit = { az:0, el:.12, dist:260, zoom:1, drag:null, auto:true }, fr = { h:30, d:200 };
-const ground = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(Array.from({length:96}, (_, i) => new THREE.Vector3(Math.cos(i/96*Math.PI*2)*40, 0, Math.sin(i/96*Math.PI*2)*40))), new THREE.LineBasicMaterial({ color:0x3a3a3a }));
+const groundMat = new THREE.LineBasicMaterial({ color:0x2a2a2a, transparent:true, opacity:.8 });
+const ground = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(Array.from({length:96}, (_, i) => new THREE.Vector3(Math.cos(i/96*Math.PI*2)*40, 0, Math.sin(i/96*Math.PI*2)*40))), groundMat);
 garden.add(ground);
-function toGarden(){ garden.add(holder); holder.position.set(0, 0, 0); holder.rotation.set(0, 0, 0); matInk.color.set(0xeeeeee); }
+function toGarden(){ garden.add(holder); holder.position.set(0, 0, 0); holder.rotation.set(0, 0, 0); setLook('jardin'); }
 const gl = $('#gl');
 gl.addEventListener('pointerdown', e => { if (mode !== 'jardin') return; orbit.drag = { x:e.clientX, y:e.clientY, az:orbit.az, el:orbit.el }; orbit.auto = false; gl.setPointerCapture(e.pointerId); });
 gl.addEventListener('pointermove', e => { const d = orbit.drag; if (!d) return; orbit.az = d.az - (e.clientX - d.x)*.008; orbit.el = clamp(d.el + (e.clientY - d.y)*.005, -.2, 1.2); });
@@ -146,11 +212,15 @@ function stopAR(){ if (stream) stream.getTracks().forEach(t => t.stop()); stream
 function setMode(m){
   mode = m; document.body.dataset.mode = m;
   $('#bAR').setAttribute('aria-pressed', String(m === 'ar')); $('#bAR').textContent = m === 'ar' ? 'jardín' : 'sobre la tira';
-  if (m === 'ar'){ marker.add(holder); holder.rotation.set(-Math.PI/2, 0, 0); applyInk(); pose3.has = false; $('#hint').hidden = false; }
+  if (m === 'ar'){ marker.add(holder); holder.rotation.set(-Math.PI/2, 0, 0); setLook('ar'); pose3.has = false; $('#hint').hidden = false; }
   else { toGarden(); $('#hint').hidden = true; }
 }
-function applyInk(){ matInk.color.set(ink === 'tinta' ? 0x0a0a0a : 0xf4f4f4); matRoot.color.set(ink === 'tinta' ? 0x333333 : 0xbbbbbb); }
-let ink = 'tinta';
+/* en el jardín la planta es luz sobre negro (suma); sobre la tira blanca se dibuja con color pleno para que se vea en el papel */
+function setLook(m){
+  const ar = m === 'ar';
+  for (const [mat, a, g] of [[matStem, 1, ar ? .85 : 1.05], [matLeaf, ar ? .92 : .8, ar ? .8 : .95], [matBud, 1, ar ? 1.1 : 1.6], [matRoot, ar ? .35 : .55, ar ? .5 : .5]]){
+    mat.blending = ar ? THREE.NormalBlending : THREE.AdditiveBlending; mat.depthWrite = ar && mat !== matLeaf; mat.uniforms.uAlpha.value = a; mat.uniforms.uGain.value = g; mat.needsUpdate = true; }
+}
 
 /* homografía de 4 puntos (plano en mm → pantalla en px) */
 function homography(src, dst){
@@ -207,10 +277,17 @@ function frame(now){
   if (document.body.dataset.crear){ requestAnimationFrame(frame); return; }
   const k = clamp((now - ageT0)/4200), e = 1 - Math.pow(1 - k, 3);
   ageShown = ageFrom + (ageNow - ageFrom)*e; pose(ageShown); showStage(ageShown);
+  const ts = now/1000; for (const m of MATS) m.uniforms.uTime.value = ts;
+  // polen: sube despacio, se mece; aparece cuando la planta ya tiene hojas
+  const pa = pollen.geometry.attributes.position, hgt = Math.max(.2, P.plantBox(plant, ageShown, 0).y1)*1.2;
+  for (let i=0;i<pollenSeed.length;i++){ const s = pollenSeed[i], y = (s[1] + ts*.018*(.4 + s[3])) % hgt;
+    pa.setXYZ(i, s[0] + Math.sin(ts*.5 + s[3]*20)*.03, y, s[2] + Math.cos(ts*.4 + s[3]*17)*.03); }
+  pa.needsUpdate = true; matPollen.uniforms.uAlpha.value = clamp((ageShown - .5)*3)*(mode === 'ar' ? .55 : .75);
   if (mode === 'jardin'){
     if (orbit.auto) orbit.az += .0025;
     const bb = P.plantBox(plant, ageShown, 0), top = Math.max(.15, bb.y1)*unitMM, low = Math.min(0, bb.y0)*unitMM;
-    const want = (top - low)*1.9/Math.min(1, innerWidth/innerHeight*1.4);
+    const wid = Math.max(Math.abs(bb.x0), Math.abs(bb.x1), .1)*2*unitMM;
+    const want = Math.max((top - low)*1.9, wid*1.5/(innerWidth/innerHeight))/Math.min(1, innerWidth/innerHeight*1.4);
     fr.h += ((top + low)/2 + 4 - fr.h)*.06; fr.d += (want - fr.d)*.06;
     ground.scale.setScalar(clamp(top/40, .35, 1.2));
     const h = fr.h; orbit.dist = fr.d*orbit.zoom; cam.fov = 40; cam.aspect = innerWidth/innerHeight; cam.updateProjectionMatrix();
@@ -231,17 +308,16 @@ function msg(t, ms=2200){ const m = $('#msg'); m.textContent = t; m.hidden = fal
 $('#bAR').onclick = () => mode === 'ar' ? stopAR() : startAR();
 $('#sDias').oninput = e => { extraDays = +e.target.value; $('#oDias').textContent = extraDays ? '+' + extraDays + ' d' : 'hoy'; e.target.style.setProperty('--p', (extraDays/120*100) + '%'); setAgeTarget(false); showInfo(); };
 $('#bRe').onclick = () => { ageFrom = .45; ageT0 = performance.now(); };
-$('#gInk').querySelectorAll('button').forEach(b => b.onclick = () => { ink = b.dataset.v; $('#gInk').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); if (mode === 'ar') applyInk(); });
 $('#sFov').oninput = e => { hfov = +e.target.value; $('#oFov').textContent = hfov + '°'; e.target.style.setProperty('--p', ((hfov - 40)/50*100) + '%'); };
 $('#bHide').onclick = () => document.body.classList.add('hide'); $('#restore').onclick = () => document.body.classList.remove('hide');
 $('#wInfo').querySelectorAll('[data-min]').forEach(b => b.onclick = () => { const w = b.closest('.win'); w.classList.toggle('min'); b.textContent = w.classList.contains('min') ? '+' : '–'; });
 addEventListener('keydown', e => { if (document.body.dataset.crear || e.target.matches('input')) return; if (e.key === 'h') document.body.classList.toggle('hide'); else if (e.key === ' '){ e.preventDefault(); $('#bRe').click(); } });
 
 /* prueba sin cámara: VISOR.test(imagen) usa una imagen fija como si fuera el video */
-function plantar(code, day, real){
-  seed = { code, day }; extraDays = 0; $('#sDias').value = 0; $('#oDias').textContent = 'hoy'; $('#sDias').style.setProperty('--p', '0%');
+function plantar(code, minute, real){
+  seed = { code, minute }; extraDays = 0; $('#sDias').value = 0; $('#oDias').textContent = 'hoy'; $('#sDias').style.setProperty('--p', '0%');
   build(); if (mode === 'ar') stopAR(); else toGarden();
-  if (real) try { if (location.protocol === 'https:') history.replaceState(null, '', location.pathname + '?s=' + code + '&t=' + day.toString(36)); } catch(e){}
+  if (real) try { if (location.protocol === 'https:') history.replaceState(null, '', location.pathname + '?s=' + code + '&t=' + minute.toString(36)); } catch(e){}
   $('#tDemo').hidden = true; msg('así crecerá: ' + code.slice(0,4));
 }
 $('#bCrear').onclick = () => { if (mode === 'ar') stopAR(); if (window.XINAS) window.XINAS.open(); };

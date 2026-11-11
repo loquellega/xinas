@@ -112,7 +112,7 @@ body.hide .win,body.hide #cDock,body.hide .corner,body.hide body.hide
 #video,#testbg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 body[data-mode=ar] #video,body[data-mode=ar] #testbg:not([hidden]){display:block}
 #gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
-#grid{position:fixed;inset:0;pointer-events:none;mix-blend-mode:difference;opacity:.18;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:64px 64px;background-position:center}
+#grid{position:fixed;inset:0;pointer-events:none;mix-blend-mode:difference;opacity:.07;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:64px 64px;background-position:center}
 body[data-mode=ar] #grid{display:none}
 .win{position:fixed;background:var(--a-panel);border:1px solid var(--a-line);border-radius:var(--a-radius);z-index:5}
 .win>header{height:var(--a-bar-h);background:var(--a-bar);display:flex;align-items:center;gap:6px;padding:0 4px 0 8px;font-size:var(--a-size-sm);border-bottom:1px solid var(--a-line);border-radius:var(--a-radius) var(--a-radius) 0 0;user-select:none}
@@ -185,7 +185,6 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
     <div class="kv"><span>sembrada</span><b id="iBorn">—</b><span>días</span><b id="iDays">0</b></div>
     <div class="hexrow"><div id="iHex"></div><div class="dim" id="iHexN">—</div></div>
     <div class="row"><label for="sDias">tiempo</label><input type="range" id="sDias" min="0" max="120" step="1" value="0"><output id="oDias">hoy</output></div>
-    <div class="row" style="grid-template-columns:60px 1fr"><label>trazo</label><div class="seg" id="gInk"><button data-v="tinta" aria-pressed="true">tinta</button><button data-v="luz" aria-pressed="false">luz</button></div></div>
     <div class="row"><label for="sFov">lente</label><input type="range" id="sFov" min="40" max="90" step="1" value="62" style="--p:44%"><output id="oFov">62°</output></div>
     <div class="dim" id="tDemo" hidden>semilla de muestra: abre este visor desde el QR de una tira para ver la tuya.</div>
     <div id="cred">Diseño, investigación y desarrollo: Héctor Cruz Juárez — <a href="https://hectorcruz.com.mx" target="_blank" rel="noopener">hectorcruz.com.mx</a><br>Colección Alchemy of Meaning · GPL-3.0 · three.js (MIT) · jsQR (Apache-2.0)</div>
@@ -208,7 +207,7 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
 
 <div id="crear" hidden>
 <div id="stage"><canvas id="cv"></canvas></div>
-<div class="corner" id="cTL">xinas · crear · v0.3</div>
+<div class="corner" id="cTL">xinas · crear · v0.4</div>
 <div class="corner" id="cTR">—</div>
 
 <section class="win" id="wLect" aria-label="lecturas">
@@ -221,6 +220,7 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
     <div class="row"><label>ángulo</label><div class="meter"><i id="mA"></i></div><output id="oA">0°</output></div>
     <div class="row"><label>masa x</label><div class="meter"><i id="mX"></i></div><output id="oX">0</output></div>
     <div class="row"><label>masa y</label><div class="meter"><i id="mY"></i></div><output id="oY">0</output></div>
+    <div class="full dim" id="lWhen">—</div>
     <div class="full dim" id="lPlant">—</div>
   </div>
 </section>
@@ -235,6 +235,12 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
     <div class="row t"><label>tramado</label><div class="seg" id="gDit"><button data-v="atkinson">atkinson</button><button data-v="floyd">floyd</button><button data-v="bayer">bayer</button><button data-v="umbral">umbral</button></div></div>
     <div class="dim">arrastra sobre la foto para moverla</div>
 
+    <div class="sec">instante</div>
+    <div class="row t"><label>momento</label><div class="acts" style="align-items:center"><output id="oWhen" class="dim" style="flex:1"></output><button class="btn" id="bNow">ahora</button></div></div>
+    <div class="row t"><label for="tPlace">lugar</label><input type="text" id="tPlace" placeholder="nombre del lugar (se imprime)" autocomplete="off"></div>
+    <div class="row t"><label>ubicación</label><div class="acts" style="align-items:center"><output id="oGeo" class="dim" style="flex:1"></output><button class="btn" id="bGeo">usar</button><button class="btn" id="bGeoX">quitar</button></div></div>
+    <div class="dim">el minuto y la ubicación aproximada (~1 km) entran en la semilla; el nombre del lugar solo se imprime.</div>
+
     <div class="sec">fusión</div>
     <div class="row t"><label>2ª foto</label><div class="acts"><button class="btn" id="b2">elegir</button><button class="btn" id="b2x" disabled>quitar</button></div></div>
     <div class="row t"><label>modo</label><div class="seg" id="gMode"><button data-v="multiply">mult</button><button data-v="screen">pant</button><button data-v="difference">dif</button><button data-v="overlay">sup</button><button data-v="lighten">aclar</button></div></div>
@@ -242,15 +248,12 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
     <div class="row"><label for="sSc2">escala</label><input type="range" id="sSc2" min="0.3" max="3" step="0.01" value="1.6"><output id="oSc2"></output></div>
 
     <div class="sec">tira</div>
-    <div class="row"><label for="sLen">largo</label><input type="range" id="sLen" min="112" max="150" step="1" value="118"><output id="oLen"></output></div>
-    <div class="row"><label for="sBrote">brote</label><input type="range" id="sBrote" min="0.05" max="1" step="0.01" value="0.45"><output id="oBrote"></output></div>
     <div class="row t"><label for="tL1">línea 1</label><input type="text" id="tL1" value="hectorcruz.com.mx" autocomplete="off"></div>
     <div class="row t"><label for="tL2">línea 2</label><input type="text" id="tL2" value="@hellohectorcruz" autocomplete="off"></div>
     <div class="row t"><label for="tBase">QR lleva a</label><input type="text" id="tBase" value="https://hectorcruz.com.mx/xinas/" autocomplete="off" spellcheck="false"></div>
     <div class="dim" id="lQR">—</div>
 
-    <div class="sec">semilla</div>
-    <div class="acts"><button class="btn" id="bSalt">otra semilla de la misma foto</button></div>
+    <div class="sec">interfaz</div>
     <div class="row t"><label>contraste ui</label><div class="seg" id="gCon"><button data-v="suave">suave</button><button data-v="alto">alto</button></div></div>
     <div class="cred">Diseño, investigación y desarrollo: Héctor Cruz Juárez — <a href="https://hectorcruz.com.mx" target="_blank" rel="noopener">hectorcruz.com.mx</a><br>Colección Alchemy of Meaning. GPL-3.0 · QR: Kazuhiko Arase (MIT) · Silkscreen (OFL).<br>h oculta la interfaz · f elige foto · esc vuelve al visor</div>
   </div>
