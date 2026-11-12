@@ -210,6 +210,8 @@ body:has(#vivo:not([hidden])) #grid{display:none}
 #vivo[hidden]{display:none!important}
 #vivo .arriba{position:absolute;top:calc(var(--sat) + 12px);left:16px;right:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:auto}
 #vivo .arriba .liga{font-size:18px;text-decoration:none}
+#vivo .arriba #bSon{font-size:12px;letter-spacing:.06em;text-decoration:underline;text-decoration-color:var(--a-line-ctl)}
+#bSon[aria-pressed=false]{color:var(--a-ink-dim);opacity:.7}
 #verso{position:absolute;left:24px;right:24px;bottom:calc(var(--sab) + 120px);text-align:center;font-size:18px;opacity:0;transition:opacity 1.4s;text-shadow:0 0 18px #000,0 0 4px #000}
 #verso.ve{opacity:1}
 #vivo .crece{position:absolute;left:30%;right:30%;bottom:calc(var(--sab) + 100px);height:1px;background:rgba(255,255,255,.12)}
@@ -281,11 +283,12 @@ body.fin #verso{bottom:calc(var(--sab) + 150px)}
       <p class="verso">lo que se borra en el papel, crece aquí.</p>
       <button class="grande" id="bGerminar">toca para germinar</button>
       <button class="liga" id="bSinTira">verla sin la tira</button>
+      <p class="sub">con sonido · en iPhone quita el modo silencio</p>
     </div>
   </section>
 
   <section id="vivo" hidden>
-    <div class="arriba"><span class="marca" id="vMarca">—</span><button class="liga" id="bInfo" aria-label="la semilla">ⓘ</button></div>
+    <div class="arriba"><span class="marca" id="vMarca">—</span><span><button class="liga" id="bSon" aria-pressed="true">sonido</button><button class="liga" id="bInfo" aria-label="la semilla">ⓘ</button></span></div>
     <p class="verso" id="verso"></p>
     <div class="crece"><i id="vAge"></i></div>
     <nav class="acciones" id="vFin" hidden><button class="grande" id="bSembrar">sembrar en Endeles</button>

@@ -2,7 +2,7 @@
 
 <img src="docs/capturas/06-sobre-la-tira.png" alt="Planta de luz de Xinas brotando sobre una tira impresa" width="320">
 
-**v0.5** · Colección Alchemy of Meaning · GPL-3.0
+**v0.6** · Colección Alchemy of Meaning · GPL-3.0
 
 ## Español
 
@@ -16,7 +16,7 @@
 2. **Crear.** Se abre la cámara del teléfono. Del retrato salen seis lecturas (brillo, contraste, bordes, ángulo y el peso visual en x e y). Del instante salen el minuto y el lugar, aproximado a ~1 km y solo con permiso. Todo eso forma un código de 13 caracteres sin nada al azar.
 3. **Lectura del instante.** La tira aparece, los números de la luz se juntan, el hexagrama se forma línea por línea y se escribe el código. Desde aquí se puede **afinar**: encuadre, contraste, tramado, fusión con otra foto, lugar y pie.
 4. **Imprime.** Guardar manda la tira de 58 × 88 mm a Fotos para imprimirla desde la app de la impresora térmica.
-5. **Germina.** Es lo que abre el QR de la tira. Con un toque, la cámara se vuelve blanco y negro, y sobre la tira se juntan puntos de luz y nace la planta: raíz, tallo, ramas, hojas y flor, en unos 25 segundos y con un verso para cada etapa. La planta es luz iridiscente, con la paleta propia de cada semilla. También se puede ver sin la tira, sobre negro.
+5. **Germina.** Es lo que abre el QR de la tira. Con un toque, la cámara se vuelve blanco y negro, y sobre la tira se juntan puntos de luz y nace la planta: raíz, tallo, ramas, hojas y flor, en unos 25 segundos y con un verso para cada etapa. La planta es luz iridiscente, con la paleta propia de cada semilla. También se puede ver sin la tira, sobre negro. La germinación suena: la música sale de la misma semilla (tónica, escala según el hexagrama y pulso), con un pedal que se abre conforme crece, una nota pulsada por cada rama que nace, campanas para las hojas y un acorde cuando florece. Una semilla siempre suena igual.
 6. **Sembrar en Endeles.** Al bosque solo viajan el número de la semilla y su minuto. Endeles la recibe en el claro de las semillas, donde sigue creciendo cada día. El hexagrama es el mismo en la tira, en Xinas y en el bosque: no se vuelve a tirar.
 
 ### Instalar
@@ -34,6 +34,7 @@ El retrato nunca sale del teléfono. Al QR y a Endeles solo viajan el código y 
 ### Código fuente
 
 - `src/planta.js` es el núcleo compartido: código ↔ planta, hexagrama, paleta, instante, edad y tira. Endeles usa una copia.
+- `src/musica.js` es la música de la germinación (Web Audio, sin archivos).
 - `src/visor.js` contiene las capas, la germinación, el fondo de cámara en blanco y negro, el bloom, jsQR y la pose.
 - `src/app.js` es el editor de la tira (afinar).
 - `src/xinas.html` es la plantilla.
@@ -50,7 +51,7 @@ Para armar el archivo: `npm install && python3 build.py` (genera `index.html`).
 2. **Create:** the phone camera opens. The portrait gives six readings and the moment gives the minute and an approximate place. Together they form a 13-character code with nothing random in it.
 3. **Reading of the moment:** the strip appears, the numbers gather, the hexagram builds line by line. You can fine-tune the strip from here.
 4. **Print:** save the 58 × 88 mm strip to Photos and print it from the thermal printer's app.
-5. **Sprout:** this is what the strip's QR opens. One tap and the camera turns black and white; light gathers on the strip and the plant is born, from root to flower, in about 25 seconds, with a line of verse for each stage. It can also be seen without the strip, on black.
+5. **Sprout:** this is what the strip's QR opens. One tap and the camera turns black and white; light gathers on the strip and the plant is born, from root to flower, in about 25 seconds, with a line of verse for each stage. It can also be seen without the strip, on black. The sprouting has its own procedural music, born from the same seed: a drone that opens as it grows, a plucked note for each new branch, bells for leaves, a chord when it blooms.
 6. **Plant it in Endeles:** only the seed number and its minute travel. The plant joins the clearing of seeds and keeps growing day by day, with the same hexagram as on the strip.
 
 ### Install

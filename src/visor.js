@@ -9,9 +9,11 @@ import jsQR from 'jsqr';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { musica } from './musica.js';
+const M = musica();
 
 const P = window.Planta, $ = s => document.querySelector(s), clamp = P.clamp;
-const VER = '0.5';
+const VER = '0.6';
 const GATHER = 2800, GROW = 24000;          // ms: la luz se junta en la semilla, luego crece
 /* Endeles vive junto a Xinas en el mismo sitio: /app/xinas/ → /app/endeles/ */
 const ENDELES = /\/app\/xinas\/?/i.test(location.pathname) ? location.pathname.replace(/\/app\/xinas\/?.*$/i, '/app/endeles/') : 'https://hectorcruz.com.mx/app/endeles/';
@@ -219,7 +221,7 @@ gl.addEventListener('wheel', e => { orbit.zoom = clamp(orbit.zoom*(1 + e.deltaY*
 
 /* ---------------- germinar: la luz se junta y la planta crece ---------------- */
 const tl = { state:'idle', t0:0, verso:'' };
-function germinar(now = performance.now()){ tl.state = 'gather'; tl.t0 = now; ageShown = 0; setVerso(''); $('#vFin').hidden = true; document.body.classList.remove('fin'); }
+function germinar(now = performance.now()){ M.preparar(P.decode(seed.code), hex.n, plant); M.empezar(); tl.state = 'gather'; tl.t0 = now; ageShown = 0; setVerso(''); $('#vFin').hidden = true; document.body.classList.remove('fin'); }
 function setVerso(t){ if (tl.verso === t) return; tl.verso = t; const v = $('#verso'); v.classList.remove('ve'); clearTimeout(setVerso.k);
   setVerso.k = setTimeout(() => { v.textContent = t; if (t) v.classList.add('ve'); }, t ? 700 : 0); }
 const ease = x => x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3)/2;
@@ -307,7 +309,7 @@ function resize(){
 }
 addEventListener('resize', resize); resize();
 function frame(now){
-  requestAnimationFrame(frame);
+  requestAnimationFrame(frame); const _last = frame.last; frame.last = now; if (_last === undefined) frame.last = now;
   if (document.body.dataset.crear) return;
   const ts = now/1000; for (const m of MATS) m.uniforms.uTime.value = ts; bgMat.uniforms.uT.value = ts;
   // línea de tiempo de la germinación
@@ -315,8 +317,9 @@ function frame(now){
   if (tl.state === 'idle') ageShown = 1;
   else if (tl.state === 'gather'){ gk = clamp((now - tl.t0)/GATHER); ageShown = 0; setVerso(VERSOS.semilla); if (gk >= 1){ tl.state = 'grow'; tl.t0 = now; } }
   else if (tl.state === 'grow'){ const k = clamp((now - tl.t0)/GROW); ageShown = ease(k)*.999 + .001; setVerso(VERSOS[P.stage(ageShown, plant.P.orn)] || '');
-    if (k >= 1){ tl.state = 'done'; tl.t0 = now; } }
-  else if (tl.state === 'done'){ ageShown = 1; if (now - tl.t0 > 3200){ setVerso(FIN); if ($('#vFin').hidden){ $('#vFin').hidden = false; document.body.classList.add('fin'); } } }
+    M.crecer(ageShown);
+    if (k >= 1){ tl.state = 'done'; tl.t0 = now; M.crecer(1); M.florecer(); } }
+  else if (tl.state === 'done'){ ageShown = 1; M.reposo(Math.min(.1, (now - (_last || now))/1000)); if (now - tl.t0 > 3200){ setVerso(FIN); if ($('#vFin').hidden){ $('#vFin').hidden = false; document.body.classList.add('fin'); } } }
   $('#vAge').style.width = (ageShown*100).toFixed(1) + '%';
   pose(Math.max(.001, ageShown));
   // luz que se junta
@@ -368,7 +371,7 @@ function pedirLugar(){
   return new Promise(res => navigator.geolocation.getCurrentPosition(p => { X.state.lat = Math.round(p.coords.latitude*100)/100; X.state.lon = Math.round(p.coords.longitude*100)/100; res(); },
     () => res(), { enableHighAccuracy:false, timeout:8000, maximumAge:600000 }));
 }
-function crearSemilla(){ if (mode === 'ar') stopAR(); $('#fCam').click(); geoP = pedirLugar(); }
+function crearSemilla(){ M.callar(1); if (mode === 'ar') stopAR(); $('#fCam').click(); geoP = pedirLugar(); }
 $('#fCam').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
   await Promise.race([geoP || Promise.resolve(), new Promise(r => setTimeout(r, 2500))]);
@@ -405,13 +408,15 @@ $('#bGuardar').onclick = async () => { const ok = await window.XINAS.saveTira();
 $('#bReguardar').onclick = () => window.XINAS.saveTira();
 function aGerminar(){ const G = window.XINAS.compute(); setSeed(G.code, G.minute, true); capa('#cGermina'); }
 $('#bImpresa').onclick = aGerminar; $('#bSaltar').onclick = aGerminar;
-$('#bMuestra').onclick = () => { stopAR(); setSeed(DEMO, P.minuteIndex(Date.now()) - 9*1440, false); capa('#cGermina'); };
+$('#bMuestra').onclick = () => { M.callar(.5); stopAR(); setSeed(DEMO, P.minuteIndex(Date.now()) - 9*1440, false); capa('#cGermina'); };
 
 /* germina */
-$('#bGerminar').onclick = async () => { vivo(); const ok = await startAR(); if (!ok){ setMode('jardin'); germinar(); } };
-$('#bSinTira').onclick = () => { vivo(); stopAR(); germinar(); };
-$('#bRe').onclick = () => germinar();
-$('#bModo').onclick = async () => { if (mode === 'ar'){ stopAR(); germinar(); } else { const ok = await startAR(); if (!ok) germinar(); } };
+$('#bGerminar').onclick = async () => { M.asegurar(); vivo(); const ok = await startAR(); if (!ok){ setMode('jardin'); germinar(); } };
+$('#bSinTira').onclick = () => { M.asegurar(); vivo(); stopAR(); germinar(); };
+$('#bRe').onclick = () => { M.asegurar(); M.callar(.6); germinar(); };
+$('#bModo').onclick = async () => { M.asegurar(); M.callar(.6); if (mode === 'ar'){ stopAR(); germinar(); } else { const ok = await startAR(); if (!ok) germinar(); } };
+$('#bSon').onclick = () => { M.asegurar(); const on = M.alternar(); $('#bSon').textContent = on ? 'sonido' : 'sin sonido'; $('#bSon').setAttribute('aria-pressed', String(on)); };
+document.addEventListener('visibilitychange', () => { if (document.hidden) M.callar(.3); });
 $('#bInfo').onclick = () => $('#wInfo').hidden = !$('#wInfo').hidden; $('#xInfo').onclick = () => $('#wInfo').hidden = true;
 $('#sFov').oninput = e => { hfov = +e.target.value; $('#oFov').textContent = hfov + '°'; e.target.style.setProperty('--p', ((hfov - 40)/50*100) + '%'); };
 for (const b of ['#bQue1', '#bQue2']) $(b).onclick = () => { $('#cQue').hidden = false; };
@@ -419,7 +424,7 @@ $('#xQue').onclick = () => { $('#cQue').hidden = true; };
 
 /* sembrar en Endeles: solo viajan el número de la semilla y su minuto */
 $('#bSembrar').onclick = async () => {
-  const b = $('#bSembrar'); b.disabled = true; b.textContent = 'sembrando…';
+  const b = $('#bSembrar'); b.disabled = true; b.textContent = 'sembrando…'; M.callar(1.2);
   const body = JSON.stringify({ s:seed.code, t:seed.minute });
   /* la carpeta puede llamarse endeles o Endeles: se usa la que responda */
   let base = ENDELES;
