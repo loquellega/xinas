@@ -13,7 +13,7 @@ import { musica } from './musica.js';
 const M = musica();
 
 const P = window.Planta, $ = s => document.querySelector(s), clamp = P.clamp;
-const VER = '0.6';
+const VER = '0.7';
 const GATHER = 2800, GROW = 24000;          // ms: la luz se junta en la semilla, luego crece
 /* Endeles vive junto a Xinas en el mismo sitio: /app/xinas/ → /app/endeles/ */
 const ENDELES = /\/app\/xinas\/?/i.test(location.pathname) ? location.pathname.replace(/\/app\/xinas\/?.*$/i, '/app/endeles/') : 'https://hectorcruz.com.mx/app/endeles/';
@@ -113,7 +113,7 @@ const DOT_F = `uniform vec3 uA, uB, uC, uD; uniform float uAlpha, uTime; varying
     gl_FragColor = vec4(pal(vK + uTime*.04)*1.3, a*uAlpha); }`;
 function dots(size, alpha){ return new THREE.ShaderMaterial({ vertexShader:DOT_V, fragmentShader:DOT_F, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
   uniforms:{ uA:{value:new THREE.Vector3()}, uB:{value:new THREE.Vector3()}, uC:{value:new THREE.Vector3()}, uD:{value:new THREE.Vector3()}, uSize:{value:size}, uPR:{value:Math.min(devicePixelRatio || 1, 2)}, uAlpha:{value:alpha}, uTime:{value:0} } }); }
-const matPollen = dots(5, .75), matSpark = dots(26, .9);
+const matPollen = dots(5, .75), matSpark = dots(18, .9);
 MATS.push(matPollen, matSpark);
 let pollen, spark, pollenSeed = [];
 
@@ -132,6 +132,15 @@ function build(){
   const bytes = P.decode(seed.code), Pal = P.palette(bytes); setPalette(Pal);
   const gc = P.paletteRGB(Pal, .1); groundMat.color.setRGB(gc[0]*.3, gc[1]*.3, gc[2]*.3);
   matLeaf.uniforms.uSpan.value = .55 + Pal.span*.6; matStem.uniforms.uSpan.value = .25 + Pal.span*.25;
+  // follajes densos: cada hoja brilla menos, para que la copa no se queme a blanco
+  const nHojas = plant.leaves.length + plant.tips.filter(x => x.kind !== 'yema').length*(plant.P.petals*.6);
+  const dens = Math.min(1, Math.pow(45/Math.max(45, nHojas), .85));
+  matLeaf.blending = THREE.NormalBlending; matLeaf.needsUpdate = true;
+  matLeaf.uniforms.uAlpha.value = .42 + .2*dens; matLeaf.uniforms.uGain.value = .95;
+  matBud.uniforms.uGain.value = 1.2*(.55 + .45*dens);
+  // muchos tallos en poco espacio: los halos se suman; se atenúan según cuántos tramos hay por volumen
+  const bbA = P.plantBox(plant, 1, 0), vol = Math.max(.15, (bbA.x1 - bbA.x0)*(bbA.y1 - bbA.y0)), dT = Math.min(1, Math.pow(260*vol/Math.max(1, plant.segs.length), .8));
+  matHalo.uniforms.uAlpha.value = .13*dT; matStem.uniforms.uGain.value = 1.1*(.65 + .35*dT); matStem.uniforms.uAlpha.value = Math.max(.3, Math.min(1, dT*1.6)); matBud.uniforms.uAlpha.value = Math.max(.35, Math.min(1, dT*1.8)); const nTip = Math.max(1, plant.tips.length); matSpark.uniforms.uSize.value = 18*Math.min(1, Math.sqrt(16/nTip)); matSpark.uniforms.uAlpha.value = .9*Math.min(1, Math.pow(20/nTip, .6));
   const nPet = plant.tips.length*(plant.P.petals + 1);
   mSeg = new THREE.InstancedMesh(cyl, matStem, plant.segs.length);
   mHalo = new THREE.InstancedMesh(cyl, matHalo, plant.segs.length);
@@ -190,7 +199,7 @@ function pose(age){
   // destellos en yemas, flores y puntas de hoja
   const sp = spark.geometry.attributes.position; let ns = 0;
   for (const t of plant.tips){ if (t.t >= age) continue; sp.setXYZ(ns++, t.p[0], t.p[1], t.p[2]); }
-  for (const l of plant.leaves){ if (l.t + .06 >= age || l.coty) continue; const g = clamp((age - l.t)/.08); sp.setXYZ(ns++, l.p[0] + l.d[0]*l.s*g, l.p[1] + l.d[1]*l.s*g, l.p[2] + l.d[2]*l.s*g); }
+  for (let li=0; li<plant.leaves.length; li+=5){ const l = plant.leaves[li]; if (l.t + .06 >= age || l.coty) continue; const g = clamp((age - l.t)/.08); sp.setXYZ(ns++, l.p[0] + l.d[0]*l.s*g, l.p[1] + l.d[1]*l.s*g, l.p[2] + l.d[2]*l.s*g); }
   spark.geometry.setDrawRange(0, ns); sp.needsUpdate = true;
 }
 
@@ -443,9 +452,12 @@ $('#restore').onclick = () => document.body.classList.remove('hide');
 /* prueba sin cámara: VISOR.test(imagen) usa una imagen fija como si fuera el video */
 window.CAPAS = { lectura, capa, germinar };
 window.VISOR = { VER, test(img){ testSrc = img; const t = new THREE.Texture(img); t.needsUpdate = true; bgMat.uniforms.tex.value = t; vivo(); setMode('ar'); },
-  get pose(){ return pose3; }, get seed(){ return seed; }, get tl(){ return tl; }, germinar, ENDELES };
+  get partes(){ return { mSeg, mHalo, mLeaf, mBall, spark, pollen, bloom, ground }; }, get pose(){ return pose3; }, get seed(){ return seed; }, get tl(){ return tl; }, germinar, ENDELES };
 
 /* entrada: con semilla en el enlace → germina; sin ella → el umbral, con una planta de muestra detrás */
 build(); setMode('jardin');
 if (fromLink) capa('#cGermina'); else capa('#cUmbral');
 requestAnimationFrame(frame);
+
+/* app instalable: guarda la copia para abrir sin conexión (solo en https, en su propio sitio) */
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});

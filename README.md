@@ -1,8 +1,10 @@
 # Xinas
 
+<img src="iconos/icono-512.png" alt="ícono de Xinas" width="96" align="right">
+
 <img src="docs/capturas/06-sobre-la-tira.png" alt="Planta de luz de Xinas brotando sobre una tira impresa" width="320">
 
-**v0.6** · Colección Alchemy of Meaning · GPL-3.0
+**v0.7** · Colección Alchemy of Meaning · GPL-3.0
 
 ## Español
 
@@ -21,7 +23,8 @@
 
 ### Instalar
 
-- `index.html` es la app completa en un solo archivo. Súbela a `https://hectorcruz.com.mx/app/xinas/`.
+- Se guarda en la pantalla de inicio del teléfono como app: en Safari, Compartir › «Agregar a inicio». Abre a pantalla completa, con su ícono, su carátula de arranque y sin conexión una vez abierta.
+- `index.html` es la app completa en un solo archivo. Junto a él van `manifest.webmanifest`, `sw.js` y la carpeta `iconos/`. Súbela a `https://hectorcruz.com.mx/app/xinas/`.
 - Endeles va junto: `…/app/endeles/`, con su `semillas.php`. Xinas encuentra la carpeta `endeles` o `Endeles`.
 - Tiene que servirse por **HTTPS**: sin HTTPS el navegador no da la cámara ni la ubicación.
 - El QR de cada tira apunta a `…/app/xinas/?s=CÓDIGO&t=MINUTO`.
@@ -56,7 +59,7 @@ Para armar el archivo: `npm install && python3 build.py` (genera `index.html`).
 
 ### Install
 
-Upload `index.html` to `https://hectorcruz.com.mx/app/xinas/`, with Endeles and its `semillas.php` in `…/app/endeles/`. Serve both over HTTPS. Build from source with `npm install && python3 build.py`.
+Add it to the home screen from Safari (Share › Add to Home Screen): it opens full screen, with its icon and launch screen, and works offline. Upload `index.html`, `manifest.webmanifest`, `sw.js` and `iconos/` to `https://hectorcruz.com.mx/app/xinas/`, with Endeles and its `semillas.php` in `…/app/endeles/`. Serve both over HTTPS. Build from source with `npm install && python3 build.py`.
 
 ## Capturas / Screenshots
 
