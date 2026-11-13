@@ -19,8 +19,14 @@
 3. **Lectura del instante.** La tira aparece, los números de la luz se juntan, el hexagrama se forma línea por línea y se escribe el código. Desde aquí se puede **afinar**: encuadre, contraste, tramado, fusión con otra foto, lugar y pie.
 4. **Imprime.** Guardar manda la tira de 58 × 88 mm a Fotos para imprimirla desde la app de la impresora térmica.
 5. **Germina.** Es lo que abre el QR de la tira. Con un toque, la cámara se vuelve blanco y negro, y sobre la tira se juntan puntos de luz y nace la planta: raíz, tallo, ramas, hojas y flor, en unos 25 segundos y con un verso para cada etapa. La planta es luz iridiscente, con la paleta propia de cada semilla. También se puede ver sin la tira, sobre negro. La germinación suena: la música sale de la misma semilla (tónica, escala según el hexagrama y pulso), con un pedal que se abre conforme crece, una nota pulsada por cada rama que nace, campanas para las hojas y un acorde cuando florece. Una semilla siempre suena igual.
-7. **Mis semillas.** El teléfono recuerda las semillas que germinaste: desde el umbral o al final de la germinación puedes volver a germinarlas o ir a verlas a Endeles.
-6. **Sembrar en Endeles.** Al bosque solo viajan el número de la semilla y su minuto. Endeles la recibe en el claro de las semillas, donde sigue creciendo cada día. El hexagrama es el mismo en la tira, en Xinas y en el bosque: no se vuelve a tirar.
+6. **Mis semillas.** El teléfono recuerda las semillas que germinaste: desde el umbral o al final de la germinación puedes volver a germinarlas o ir a verlas a Endeles.
+7. **Sembrar en Endeles.** Al bosque solo viajan el número de la semilla y su minuto. Endeles la recibe en el claro de las semillas, donde sigue creciendo cada día. El hexagrama es el mismo en la tira, en Xinas y en el bosque: no se vuelve a tirar.
+
+### Herbario de lecturas
+
+Cada etapa de la germinación trae, además de su verso, una lectura breve parafraseada de un autor que piensa la semilla, el instante o el azar: Emanuele Coccia (*La vida de las plantas*), Dōgen (*Uji*, ser-tiempo), Goethe (*La metamorfosis de las plantas*), Borges (*El jardín de senderos que se bifurcan*), Roland Barthes (*La cámara lúcida*: el minuto de tu retrato es único) y C. G. Jung (prólogo al *I Ching* de Wilhelm: el hexagrama retrata el instante). El herbario completo está en «qué es xinas».
+
+La interfaz toma el color de cada semilla: el acento de botones, código y pulso es el de su planta, igual en Xinas que en Endeles.
 
 ### Instalar
 
@@ -57,6 +63,10 @@ Para armar el archivo: `npm install && python3 build.py` (genera `index.html`).
 4. **Print:** save the 58 × 88 mm strip to Photos and print it from the thermal printer's app.
 5. **Sprout:** this is what the strip's QR opens. One tap and the camera turns black and white; light gathers on the strip and the plant is born, from root to flower, in about 25 seconds, with a line of verse for each stage. It can also be seen without the strip, on black. The sprouting has its own procedural music, born from the same seed: a drone that opens as it grows, a plucked note for each new branch, bells for leaves, a chord when it blooms.
 6. **Plant it in Endeles:** only the seed number and its minute travel. The plant joins the clearing of seeds and keeps growing day by day, with the same hexagram as on the strip.
+
+### Herbarium of readings
+
+Each stage of sprouting brings, besides its verse, a short paraphrased reading from an author who thinks about seeds, moments or chance: Coccia, Dōgen, Goethe, Borges, Barthes and Jung (foreword to Wilhelm's *I Ching*). The interface takes each seed's color as its accent, in Xinas and in Endeles alike.
 
 ### Install
 

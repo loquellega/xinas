@@ -33,7 +33,8 @@
   --a-ink:#d2d2d2; --a-ink-strong:#fff; --a-ink-dim:#8f8f8f;
   --a-accent:#76c411; --a-accent-ink:#a5e04a; --a-accent-bg:#1b2512;
   --a-radius:3px; --a-radius-sm:2px; --a-gap:8px; --a-pad:10px; --a-bar-h:24px; --a-ctl-h:32px; --a-t:120ms;
-  --a-font:Inter,Arial,Helvetica,sans-serif; --a-size:12px; --a-size-sm:11px;
+  --a-font:Inter,-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  --semilla:#76c411; --semilla-ink:#a5e04a; --semilla-bg:#1b2512; --a-size:12px; --a-size-sm:11px;
   --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
   --sal:env(safe-area-inset-left,0px); --sar:env(safe-area-inset-right,0px);
   color-scheme:dark;
@@ -191,15 +192,15 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
 #capas .capa.velo{background:rgba(5,5,5,.985);z-index:14}
 #capas .capa[hidden]{display:none!important}
 .centro{max-width:420px;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
-.centro.texto{text-align:left;align-items:flex-start;gap:12px}
+.centro.texto{text-align:left;align-items:flex-start;gap:12px;max-height:calc(100vh - 60px);overflow:auto;scrollbar-width:thin;scrollbar-color:var(--a-line-ctl) transparent}
 .centro.texto p{margin:0;font-size:15px;line-height:1.55;color:var(--a-ink)}
 .nombre{margin:0;font-weight:300;font-size:44px;letter-spacing:.2em;color:var(--a-ink-strong);text-transform:lowercase}
 h2.nombre{font-size:22px;letter-spacing:.12em}
 .verso{margin:0;font-size:17px;font-weight:300;line-height:1.5;color:var(--a-ink-strong);letter-spacing:.01em}
 .sub{margin:0;font-size:13px;color:var(--a-ink-dim)}
 .marca{margin:0;font-size:11px;letter-spacing:.14em;color:var(--a-ink-dim);text-transform:uppercase}
-.grande{min-height:54px;padding:0 28px;border-radius:28px;border:1px solid var(--a-accent);background:var(--a-accent-bg);color:var(--a-accent-ink);font-size:17px;letter-spacing:.04em;cursor:pointer;transition:background var(--a-t),color var(--a-t)}
-.grande:hover{background:#243318;color:#c4f07a}
+.grande{min-height:54px;padding:0 28px;border-radius:28px;border:1px solid var(--semilla);background:var(--semilla-bg);color:var(--semilla-ink);font-size:17px;letter-spacing:.04em;cursor:pointer;transition:background var(--a-t),color var(--a-t)}
+.grande:hover{background:var(--semilla-bg);color:#fff;box-shadow:0 0 24px var(--semilla-bg)}
 .liga{background:none;border:0;color:var(--a-ink-dim);font-size:13px;padding:8px 6px;cursor:pointer;text-decoration:underline;text-decoration-color:var(--a-line-ctl);text-underline-offset:4px}
 .liga:hover{color:var(--a-ink-strong)}
 .pie{position:absolute;bottom:calc(var(--sab) + 14px);left:0;right:0;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
@@ -219,7 +220,7 @@ h2.nombre{font-size:22px;letter-spacing:.12em}
 .hexg i{display:block;height:5px;background:var(--a-ink-strong);opacity:0;transform:scaleX(.2);transition:opacity .6s,transform .6s}
 .hexg i.n{background:linear-gradient(90deg,var(--a-ink-strong) 40%,transparent 40% 60%,var(--a-ink-strong) 60%)}
 .hexg i.ve{opacity:1;transform:none}
-.codigo{font-size:18px;letter-spacing:.14em;color:var(--a-accent-ink);min-height:24px}
+.codigo{font-size:18px;letter-spacing:.14em;color:var(--semilla-ink);min-height:24px}
 @media (max-width:560px){.lect{flex-direction:column;gap:14px}#lTira{width:44vw}.datos{width:100%}}
 /* mis semillas */
 .mis{max-height:calc(100vh - 80px);overflow:auto;scrollbar-width:thin;scrollbar-color:var(--a-line-ctl) transparent}
@@ -238,8 +239,14 @@ body:has(#vivo:not([hidden])) #grid{display:none}
 #bSon[aria-pressed=false]{color:var(--a-ink-dim);opacity:.7}
 #verso{position:absolute;left:24px;right:24px;bottom:calc(var(--sab) + 120px);text-align:center;font-size:18px;opacity:0;transition:opacity 1.4s;text-shadow:0 0 18px #000,0 0 4px #000}
 #verso.ve{opacity:1}
+#lectura{position:absolute;left:28px;right:28px;top:calc(var(--sat) + 52px);text-align:left;font-size:12px;line-height:1.5;color:var(--a-ink);opacity:0;transition:opacity 1.6s;text-shadow:0 0 12px #000;max-width:340px}
+#lectura span{display:block;margin-top:4px;font-size:10px;letter-spacing:.06em;color:var(--semilla-ink);opacity:.85}
+#lectura.ve{opacity:.92}
+.herbario{display:grid;gap:12px;margin:4px 0 6px;border-top:1px solid var(--a-line);padding-top:12px;width:100%}
+.herbario p{margin:0;font-size:13px;line-height:1.5;color:var(--a-ink)}
+.herbario p span{display:block;font-size:10px;letter-spacing:.06em;color:var(--semilla-ink);margin-top:2px}
 #vivo .crece{position:absolute;left:30%;right:30%;bottom:calc(var(--sab) + 100px);height:1px;background:rgba(255,255,255,.12)}
-#vivo .crece i{display:block;height:100%;width:0;background:var(--a-accent)}
+#vivo .crece i{display:block;height:100%;width:0;background:var(--semilla)}
 #vFin{position:absolute;left:0;right:0;bottom:calc(var(--sab) + 18px);pointer-events:auto}
 #vFin .liga{text-shadow:0 0 8px #000}
 body[data-mode=ar] #vivo .crece{bottom:calc(var(--sab) + 100px)}
@@ -283,6 +290,7 @@ body.fin #verso{bottom:calc(var(--sab) + 150px)}
       <canvas id="lTira" width="384" height="704" aria-label="la tira"></canvas>
       <div class="datos">
         <p class="verso">esto es lo que la luz recordó de ti.</p>
+        <p class="sub">el minuto de tu retrato es único: no volverá a pasar.</p>
         <dl id="lDatos"></dl>
         <div class="hexg" id="lHex"></div>
         <div class="codigo" id="lCodigo"></div>
@@ -313,6 +321,7 @@ body.fin #verso{bottom:calc(var(--sab) + 150px)}
 
   <section id="vivo" hidden>
     <div class="arriba"><span class="marca" id="vMarca">—</span><span><button class="liga" id="bSon" aria-pressed="true">sonido</button><button class="liga" id="bInfo" aria-label="la semilla">ⓘ</button></span></div>
+    <p id="lectura"></p>
     <p class="verso" id="verso"></p>
     <div class="crece"><i id="vAge"></i></div>
     <nav class="acciones" id="vFin" hidden><button class="grande" id="bSembrar">sembrar en Endeles</button>
@@ -334,6 +343,8 @@ body.fin #verso{bottom:calc(var(--sab) + 150px)}
       <p>la tira térmica es su cuerpo frágil: el calor y los años la irán borrando.</p>
       <p>la planta es su memoria. germina al mirarla y, sembrada en Endeles, sigue creciendo en un bosque que no se apaga.</p>
       <p class="verso">lo impermanente, en el papel. lo que permanece, en el bosque.</p>
+      <h2 class="nombre" style="font-size:15px;margin-top:10px">herbario de lecturas</h2>
+      <div class="herbario" id="herbario"></div>
       <button class="liga" id="xQue">cerrar</button>
     </div>
   </section>

@@ -13,7 +13,7 @@ import { musica } from './musica.js';
 const M = musica();
 
 const P = window.Planta, $ = s => document.querySelector(s), clamp = P.clamp;
-const VER = '0.8';
+const VER = '0.9';
 const GATHER = 2800, GROW = 24000;          // ms: la luz se junta en la semilla, luego crece
 /* Endeles vive junto a Xinas en el mismo sitio: /app/xinas/ → /app/endeles/ */
 const ENDELES = /\/app\/xinas\/?/i.test(location.pathname) ? location.pathname.replace(/\/app\/xinas\/?.*$/i, '/app/endeles/') : 'https://hectorcruz.com.mx/app/endeles/';
@@ -36,6 +36,16 @@ const VERSOS = {
   yemas:'este instante no se repite. por eso florece.', plenitud:'este instante no se repite. por eso florece.'
 };
 const FIN = 'llévala al bosque. seguirá creciendo cuando la tira ya no exista.';
+/* herbario de lecturas: una voz por etapa, en paráfrasis propia («a partir de») */
+const HERBARIO = [
+  { etapas:['semilla'], autor:'Emanuele Coccia', obra:'La vida de las plantas', linea:'la semilla es una vida que espera: guarda el mundo entero plegado hasta encontrar su momento.' },
+  { etapas:['raíz'], autor:'Dōgen', obra:'Uji (ser-tiempo)', linea:'el tiempo no pasa junto a las cosas: cada cosa es su tiempo. este instante está completo.' },
+  { etapas:['brote', 'tallo'], autor:'Goethe', obra:'La metamorfosis de las plantas', linea:'toda la planta es una sola forma que se transforma: la hoja se vuelve tallo, cáliz, pétalo y semilla.' },
+  { etapas:['ramas'], autor:'Jorge Luis Borges', obra:'El jardín de senderos que se bifurcan', linea:'el tiempo se bifurca hacia innumerables futuros; cada rama es uno de ellos.' },
+  { etapas:['hojas'], autor:'Roland Barthes', obra:'La cámara lúcida', linea:'una fotografía no cuenta lo que fue: certifica que fue. el minuto de tu retrato es único y ya pasó; por eso queda.' },
+  { etapas:['flor', 'follaje', 'yemas', 'plenitud'], autor:'Carl Gustav Jung', obra:'prólogo al I Ching de Richard Wilhelm', linea:'lo que nace en un momento lleva la cualidad de ese momento. el hexagrama no predice: retrata el instante.' }
+];
+const lecturaDe = st => HERBARIO.find(h => h.etapas.includes(st)) || null;
 
 /* ---------------- escena ---------------- */
 const renderer = new THREE.WebGLRenderer({ canvas:$('#gl'), antialias:true, alpha:false });
@@ -231,8 +241,9 @@ gl.addEventListener('wheel', e => { orbit.zoom = clamp(orbit.zoom*(1 + e.deltaY*
 /* ---------------- germinar: la luz se junta y la planta crece ---------------- */
 const tl = { state:'idle', t0:0, verso:'' };
 function germinar(now = performance.now()){ if (seed.code !== DEMO) recordar(seed.code, seed.minute); M.preparar(P.decode(seed.code), hex.n, plant); M.empezar(); tl.state = 'gather'; tl.t0 = now; ageShown = 0; setVerso(''); $('#vFin').hidden = true; document.body.classList.remove('fin'); }
-function setVerso(t){ if (tl.verso === t) return; tl.verso = t; const v = $('#verso'); v.classList.remove('ve'); clearTimeout(setVerso.k);
-  setVerso.k = setTimeout(() => { v.textContent = t; if (t) v.classList.add('ve'); }, t ? 700 : 0); }
+function setVerso(t, lec){ if (tl.verso === t) return; tl.verso = t; const v = $('#verso'), l = $('#lectura'); v.classList.remove('ve'); l.classList.remove('ve'); clearTimeout(setVerso.k);
+  setVerso.k = setTimeout(() => { v.textContent = t; if (t) v.classList.add('ve');
+    if (lec){ l.innerHTML = `${lec.linea}<span>a partir de ${lec.autor}, <i>${lec.obra}</i></span>`; l.classList.add('ve'); } }, t ? 700 : 0); }
 const ease = x => x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3)/2;
 /* luz que se junta: puntos que caen hacia la semilla antes de que nazca la raíz */
 const NG = 90, gGeo = new THREE.BufferGeometry(), gPos = new Float32Array(NG*3), gFrom = [];
@@ -324,8 +335,8 @@ function frame(now){
   // línea de tiempo de la germinación
   let gk = 0;
   if (tl.state === 'idle') ageShown = 1;
-  else if (tl.state === 'gather'){ gk = clamp((now - tl.t0)/GATHER); ageShown = 0; setVerso(VERSOS.semilla); if (gk >= 1){ tl.state = 'grow'; tl.t0 = now; } }
-  else if (tl.state === 'grow'){ const k = clamp((now - tl.t0)/GROW); ageShown = ease(k)*.999 + .001; setVerso(VERSOS[P.stage(ageShown, plant.P.orn)] || '');
+  else if (tl.state === 'gather'){ gk = clamp((now - tl.t0)/GATHER); ageShown = 0; setVerso(VERSOS.semilla, lecturaDe('semilla')); if (gk >= 1){ tl.state = 'grow'; tl.t0 = now; } }
+  else if (tl.state === 'grow'){ const k = clamp((now - tl.t0)/GROW); ageShown = ease(k)*.999 + .001; { const st = P.stage(ageShown, plant.P.orn); setVerso(VERSOS[st] || '', lecturaDe(st)); }
     M.crecer(ageShown);
     if (k >= 1){ tl.state = 'done'; tl.t0 = now; M.crecer(1); M.florecer(); } }
   else if (tl.state === 'done'){ ageShown = 1; M.reposo(Math.min(.1, (now - (_last || now))/1000)); if (now - tl.t0 > 3200){ setVerso(FIN); if ($('#vFin').hidden){ $('#vFin').hidden = false; document.body.classList.add('fin'); } } }
@@ -391,8 +402,18 @@ function msg(t, ms=2400){ const m = $('#msg'); m.textContent = t; m.hidden = fal
 const CAPAS = ['#cUmbral', '#cLectura', '#cImprime', '#cGermina', '#cQue'];
 function capa(id){ for (const c of CAPAS) $(c).hidden = c !== id; $('#vivo').hidden = id !== null; }
 function vivo(){ for (const c of CAPAS) $(c).hidden = true; $('#vivo').hidden = false; }
+/* el acento de la interfaz es el color de la planta: la interfaz se tiñe del instante */
+function acento(code){
+  const b = P.decode(code); if (!b) return; const pal = P.palette(b);
+  let [r, g, bl] = P.paletteRGB(pal, .3); const mx = Math.max(r, g, bl, .01), k = .92/mx; r *= k; g *= k; bl *= k;   // lo más luminoso posible
+  const c = v => Math.round(Math.min(1, v)*255), ink = v => Math.round(Math.min(1, v*.55 + .45)*255);
+  const st = document.documentElement.style;
+  st.setProperty('--semilla', `rgb(${c(r)},${c(g)},${c(bl)})`); st.setProperty('--semilla-ink', `rgb(${ink(r)},${ink(g)},${ink(bl)})`);
+  st.setProperty('--semilla-bg', `rgba(${c(r)},${c(g)},${c(bl)},.14)`);
+  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = '#050505';
+}
 function setSeed(code, minute, real){
-  seed = { code, minute }; build();
+  seed = { code, minute }; build(); acento(code);
   if (real) try { if (location.protocol === 'https:') history.replaceState(null, '', location.pathname + '?s=' + code + '&t=' + minute.toString(36)); } catch(e){}
 }
 
@@ -452,6 +473,7 @@ $('#bSon').onclick = () => { M.asegurar(); const on = M.alternar(); $('#bSon').t
 document.addEventListener('visibilitychange', () => { if (document.hidden) M.callar(.3); });
 $('#bInfo').onclick = () => $('#wInfo').hidden = !$('#wInfo').hidden; $('#xInfo').onclick = () => $('#wInfo').hidden = true;
 $('#sFov').oninput = e => { hfov = +e.target.value; $('#oFov').textContent = hfov + '°'; e.target.style.setProperty('--p', ((hfov - 40)/50*100) + '%'); };
+$('#herbario').innerHTML = HERBARIO.map(h => `<p>${h.linea}<span>a partir de ${h.autor}, <i>${h.obra}</i> · ${h.etapas[0]}</span></p>`).join('');
 for (const b of ['#bQue1', '#bQue2']) $(b).onclick = () => { $('#cQue').hidden = false; };
 $('#xQue').onclick = () => { $('#cQue').hidden = true; };
 
@@ -491,7 +513,7 @@ window.VISOR = { VER, test(img){ testSrc = img; const t = new THREE.Texture(img)
   get partes(){ return { mSeg, mHalo, mLeaf, mBall, spark, pollen, bloom, ground }; }, get pose(){ return pose3; }, get seed(){ return seed; }, get tl(){ return tl; }, germinar, ENDELES };
 
 /* entrada: con semilla en el enlace → germina; sin ella → el umbral, con una planta de muestra detrás */
-build(); setMode('jardin');
+build(); acento(seed.code); setMode('jardin');
 if (fromLink) capa('#cGermina'); else capa('#cUmbral');
 requestAnimationFrame(frame);
 
