@@ -1,6 +1,6 @@
 /* Xinas · service worker: abre al instante y sin conexión con la copia guardada,
    y en segundo plano trae la versión nueva para la próxima vez. */
-const CACHE = 'xinas-v0.7';
+const CACHE = 'xinas-v0.8';
 const FILES = ['./', './index.html', './manifest.webmanifest', './iconos/apple-touch-icon.png', './iconos/icono-192.png', './iconos/icono-512.png', './iconos/favicon-32.png'];
 
 self.addEventListener('install', e => {

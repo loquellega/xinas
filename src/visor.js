@@ -13,7 +13,7 @@ import { musica } from './musica.js';
 const M = musica();
 
 const P = window.Planta, $ = s => document.querySelector(s), clamp = P.clamp;
-const VER = '0.7';
+const VER = '0.8';
 const GATHER = 2800, GROW = 24000;          // ms: la luz se junta en la semilla, luego crece
 /* Endeles vive junto a Xinas en el mismo sitio: /app/xinas/ → /app/endeles/ */
 const ENDELES = /\/app\/xinas\/?/i.test(location.pathname) ? location.pathname.replace(/\/app\/xinas\/?.*$/i, '/app/endeles/') : 'https://hectorcruz.com.mx/app/endeles/';
@@ -230,7 +230,7 @@ gl.addEventListener('wheel', e => { orbit.zoom = clamp(orbit.zoom*(1 + e.deltaY*
 
 /* ---------------- germinar: la luz se junta y la planta crece ---------------- */
 const tl = { state:'idle', t0:0, verso:'' };
-function germinar(now = performance.now()){ M.preparar(P.decode(seed.code), hex.n, plant); M.empezar(); tl.state = 'gather'; tl.t0 = now; ageShown = 0; setVerso(''); $('#vFin').hidden = true; document.body.classList.remove('fin'); }
+function germinar(now = performance.now()){ if (seed.code !== DEMO) recordar(seed.code, seed.minute); M.preparar(P.decode(seed.code), hex.n, plant); M.empezar(); tl.state = 'gather'; tl.t0 = now; ageShown = 0; setVerso(''); $('#vFin').hidden = true; document.body.classList.remove('fin'); }
 function setVerso(t){ if (tl.verso === t) return; tl.verso = t; const v = $('#verso'); v.classList.remove('ve'); clearTimeout(setVerso.k);
   setVerso.k = setTimeout(() => { v.textContent = t; if (t) v.classList.add('ve'); }, t ? 700 : 0); }
 const ease = x => x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3)/2;
@@ -362,6 +362,30 @@ function frame(now){
   composer.render();
 }
 
+/* ---------------- mis semillas: la memoria de este teléfono ---------------- */
+const MIS_K = 'xinas.semillas';
+function misLeer(){ try { return JSON.parse(localStorage.getItem(MIS_K) || '[]').filter(x => x && /^[0-9A-HJKMNP-TV-Z]{13}$/.test(x.s)); } catch(e){ return []; } }
+function misGuardar(L){ try { localStorage.setItem(MIS_K, JSON.stringify(L.slice(-80))); } catch(e){} }
+function recordar(s, t, extra){ if (s === DEMO) return; const L = misLeer(); let x = L.find(e => e.s === s); if (!x){ x = { s, t }; L.push(x); }
+  Object.assign(x, extra || {}, { v:Date.now() }); misGuardar(L); $('#bMis').hidden = false; }
+function misPintar(){
+  const L = misLeer().sort((a, b) => (b.v || 0) - (a.v || 0)), ul = $('#misLista'); ul.innerHTML = '';
+  if (!L.length){ ul.innerHTML = '<li class="sub">todavía no hay semillas en este teléfono.</li>'; return; }
+  for (const x of L){
+    const b = P.decode(x.s); if (!b) continue; const pl = P.grow(b), hx = P.hexagram(pl.f), pal = P.palette(b);
+    const li = document.createElement('li'), cv = document.createElement('canvas'); cv.width = 96; cv.height = 96; cv.className = 'mini';
+    const c = cv.getContext('2d'), bb = P.plantBox(pl, 1, 0), sc = Math.min(84/Math.max(.3, bb.y1), 40/Math.max(.1, -bb.x0, bb.x1));
+    c.fillStyle = '#050505'; c.fillRect(0, 0, 96, 96); c.globalCompositeOperation = 'lighter';
+    for (let k=0;k<3;k++){ const col = P.paletteRGB(pal, .15 + k*.25).map(v => Math.round(v*255)); c.globalAlpha = .85; P.drawPlant(c, pl, 1, { ox:48, oy:91, s:sc, rot:k*.35, col:`rgb(${col})`, lw:1.2, min:1, dimRoots:0, fillLeaves:k === 2 }); }
+    const d = document.createElement('div'); d.className = 'misd';
+    d.innerHTML = `<b>${nice(x.s)}</b><span>${fmtMinute(x.t)}</span><span>${hx.n} · ${hx.name}${x.sem ? ' · sembrada' : ''}</span>`;
+    const a = document.createElement('div'); a.className = 'misa';
+    const g = document.createElement('button'); g.className = 'liga'; g.textContent = 'germinar'; g.onclick = () => { $('#cMis').hidden = true; setSeed(x.s, x.t, true); capa('#cGermina'); };
+    const e = document.createElement('button'); e.className = 'liga'; e.textContent = 'verla en Endeles'; e.onclick = () => irAlBosque(x.s, x.t, false);
+    a.append(g, e); li.append(cv, d, a); ul.append(li);
+  }
+}
+
 /* ---------------- capas ---------------- */
 function msg(t, ms=2400){ const m = $('#msg'); m.textContent = t; m.hidden = false; clearTimeout(msg.t); msg.t = setTimeout(() => m.hidden = true, ms); }
 const CAPAS = ['#cUmbral', '#cLectura', '#cImprime', '#cGermina', '#cQue'];
@@ -432,19 +456,31 @@ for (const b of ['#bQue1', '#bQue2']) $(b).onclick = () => { $('#cQue').hidden =
 $('#xQue').onclick = () => { $('#cQue').hidden = true; };
 
 /* sembrar en Endeles: solo viajan el número de la semilla y su minuto */
+async function irAlBosque(code, minute, sembrar){
+  const body = JSON.stringify({ s:code, t:minute });
+  let base = ENDELES, ok = false;
+  // nota para Endeles en este teléfono: si el servidor recorta el enlace, la semilla igual llega
+  try { localStorage.setItem('xinas.llegada', JSON.stringify({ s:code, t:minute, en:Date.now() })); } catch(e){}
+  if (sembrar){
+    /* la carpeta puede llamarse endeles o Endeles: se usa la que responda */
+    const cands = [ENDELES, ENDELES.replace('/endeles/', '/Endeles/')].filter((v, i, a) => a.indexOf(v) === i);
+    for (const c of cands){
+      try { const r = await Promise.race([fetch(c + 'semillas.php', { method:'POST', headers:{ 'Content-Type':'application/json' }, body }), new Promise((_, rj) => setTimeout(rj, 6000))]);
+        if (r && r.status !== 404){ base = c; try { const j = await r.json(); ok = !!(j && j.ok); } catch(e){} break; } } catch(e){}
+    }
+    recordar(code, minute, { sem:true, enServidor:ok });
+  }
+  const q = 's=' + code + '&t=' + minute.toString(36);
+  location.href = base + '?' + q + '#' + q;
+}
 $('#bSembrar').onclick = async () => {
   const b = $('#bSembrar'); b.disabled = true; b.textContent = 'sembrando…'; M.callar(1.2);
-  const body = JSON.stringify({ s:seed.code, t:seed.minute });
-  /* la carpeta puede llamarse endeles o Endeles: se usa la que responda */
-  let base = ENDELES;
-  const cands = [ENDELES, ENDELES.replace('/endeles/', '/Endeles/')].filter((v, i, a) => a.indexOf(v) === i);
-  for (const c of cands){
-    try { const r = await Promise.race([fetch(c + 'semillas.php', { method:'POST', headers:{ 'Content-Type':'application/json' }, body }), new Promise((_, rj) => setTimeout(rj, 6000))]);
-      if (r && r.status !== 404){ base = c; break; } } catch(e){}
-  }
-  location.href = base + '?s=' + seed.code + '&t=' + seed.minute.toString(36);
+  await irAlBosque(seed.code, seed.minute, true);
   setTimeout(() => { b.disabled = false; b.textContent = 'sembrar en Endeles'; }, 4000);
 };
+$('#bMis').onclick = $('#bMis2').onclick = () => { misPintar(); $('#cMis').hidden = false; };
+$('#xMis').onclick = () => { $('#cMis').hidden = true; };
+$('#bMis').hidden = !misLeer().length;
 addEventListener('keydown', e => { if (document.body.dataset.crear || e.target.matches('input')) return;
   if (e.key === 'h') document.body.classList.toggle('hide'); else if (e.key === ' '){ e.preventDefault(); germinar(); } });
 $('#restore').onclick = () => document.body.classList.remove('hide');

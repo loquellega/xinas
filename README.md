@@ -4,7 +4,7 @@
 
 <img src="docs/capturas/06-sobre-la-tira.png" alt="Planta de luz de Xinas brotando sobre una tira impresa" width="320">
 
-**v0.7** · Colección Alchemy of Meaning · GPL-3.0
+**v0.8** · Colección Alchemy of Meaning · GPL-3.0
 
 ## Español
 
@@ -19,6 +19,7 @@
 3. **Lectura del instante.** La tira aparece, los números de la luz se juntan, el hexagrama se forma línea por línea y se escribe el código. Desde aquí se puede **afinar**: encuadre, contraste, tramado, fusión con otra foto, lugar y pie.
 4. **Imprime.** Guardar manda la tira de 58 × 88 mm a Fotos para imprimirla desde la app de la impresora térmica.
 5. **Germina.** Es lo que abre el QR de la tira. Con un toque, la cámara se vuelve blanco y negro, y sobre la tira se juntan puntos de luz y nace la planta: raíz, tallo, ramas, hojas y flor, en unos 25 segundos y con un verso para cada etapa. La planta es luz iridiscente, con la paleta propia de cada semilla. También se puede ver sin la tira, sobre negro. La germinación suena: la música sale de la misma semilla (tónica, escala según el hexagrama y pulso), con un pedal que se abre conforme crece, una nota pulsada por cada rama que nace, campanas para las hojas y un acorde cuando florece. Una semilla siempre suena igual.
+7. **Mis semillas.** El teléfono recuerda las semillas que germinaste: desde el umbral o al final de la germinación puedes volver a germinarlas o ir a verlas a Endeles.
 6. **Sembrar en Endeles.** Al bosque solo viajan el número de la semilla y su minuto. Endeles la recibe en el claro de las semillas, donde sigue creciendo cada día. El hexagrama es el mismo en la tira, en Xinas y en el bosque: no se vuelve a tirar.
 
 ### Instalar

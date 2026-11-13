@@ -188,7 +188,7 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
 
 /* ---------- capas ---------- */
 #capas .capa{position:fixed;inset:0;z-index:12;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:calc(var(--sat) + 24px) 22px calc(var(--sab) + 24px);background:radial-gradient(ellipse at 50% 45%,rgba(10,10,10,.55),rgba(10,10,10,.92) 70%)}
-#capas .capa.velo{background:rgba(6,6,6,.94);z-index:14}
+#capas .capa.velo{background:rgba(5,5,5,.985);z-index:14}
 #capas .capa[hidden]{display:none!important}
 .centro{max-width:420px;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
 .centro.texto{text-align:left;align-items:flex-start;gap:12px}
@@ -221,6 +221,13 @@ h2.nombre{font-size:22px;letter-spacing:.12em}
 .hexg i.ve{opacity:1;transform:none}
 .codigo{font-size:18px;letter-spacing:.14em;color:var(--a-accent-ink);min-height:24px}
 @media (max-width:560px){.lect{flex-direction:column;gap:14px}#lTira{width:44vw}.datos{width:100%}}
+/* mis semillas */
+.mis{max-height:calc(100vh - 80px);overflow:auto;scrollbar-width:thin;scrollbar-color:var(--a-line-ctl) transparent}
+#misLista{list-style:none;margin:0;padding:0;display:grid;gap:10px;width:100%}
+#misLista li{display:grid;grid-template-columns:64px 1fr;gap:4px 12px;align-items:center;border-top:1px solid var(--a-line);padding-top:10px}
+#misLista .mini{width:64px;height:64px;border-radius:6px;grid-row:span 2}
+.misd{display:grid;gap:2px;font-size:12px;color:var(--a-ink-dim)}.misd b{font-weight:400;color:var(--a-ink-strong);letter-spacing:.08em}
+.misa{display:flex;gap:4px}.misa .liga{padding:4px 6px 4px 0}
 /* vivo: la planta creciendo */
 body:has(#vivo:not([hidden])) #grid{display:none}
 #vivo{position:fixed;inset:0;z-index:10;pointer-events:none}
@@ -268,7 +275,7 @@ body.fin #verso{bottom:calc(var(--sab) + 150px)}
       <button class="grande" id="bSemilla">crear semilla</button>
       <p class="sub">quédate quieto. la luz que te toca ahora es tuya.</p>
     </div>
-    <nav class="pie"><button class="liga" id="bMuestra">ver una semilla</button><button class="liga" id="bQue1">qué es xinas</button><button class="liga" id="bAfinar0">afinar</button></nav>
+    <nav class="pie"><button class="liga" id="bMis" hidden>mis semillas</button><button class="liga" id="bMuestra">ver una semilla</button><button class="liga" id="bQue1">qué es xinas</button><button class="liga" id="bAfinar0">afinar</button></nav>
   </section>
 
   <section class="capa" id="cLectura" hidden>
@@ -309,9 +316,17 @@ body.fin #verso{bottom:calc(var(--sab) + 150px)}
     <p class="verso" id="verso"></p>
     <div class="crece"><i id="vAge"></i></div>
     <nav class="acciones" id="vFin" hidden><button class="grande" id="bSembrar">sembrar en Endeles</button>
-      <div class="fila"><button class="liga" id="bRe">volver a crecer</button><button class="liga" id="bModo">sobre la tira</button><button class="liga" id="bQue2">qué es xinas</button><button class="liga" id="bCrear">crear semilla</button></div></nav>
+      <div class="fila"><button class="liga" id="bRe">volver a crecer</button><button class="liga" id="bModo">sobre la tira</button><button class="liga" id="bMis2">mis semillas</button><button class="liga" id="bQue2">qué es xinas</button><button class="liga" id="bCrear">crear semilla</button></div></nav>
   </section>
 
+  <section class="capa velo" id="cMis" hidden>
+    <div class="centro texto mis">
+      <h2 class="nombre">mis semillas</h2>
+      <p class="sub">las que germinaste en este teléfono. la tira las guarda en su QR; el bosque, para siempre.</p>
+      <ul id="misLista"></ul>
+      <button class="liga" id="xMis">cerrar</button>
+    </div>
+  </section>
   <section class="capa velo" id="cQue" hidden>
     <div class="centro texto">
       <h2 class="nombre">xinas: semilla</h2>
