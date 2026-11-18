@@ -22,6 +22,10 @@
 6. **Mis semillas.** El teléfono recuerda las semillas que germinaste: desde el umbral o al final de la germinación puedes volver a germinarlas o ir a verlas a Endeles.
 7. **Sembrar en Endeles.** Al bosque solo viajan el número de la semilla y su minuto. Endeles la recibe en el claro de las semillas, donde sigue creciendo cada día. El hexagrama es el mismo en la tira, en Xinas y en el bosque: no se vuelve a tirar.
 
+### La semilla es la tirada
+
+En el I Ching se lanzan monedas para que el momento hable. En Xinas la luz del retrato cae en su lugar: el hexagrama de la semilla es la tirada de ese instante, y sus seis líneas crecen de abajo hacia arriba, como la planta. En Endeles se puede solo mirarla crecer o preguntarle algo y caminar entre sus seis líneas; al final el bosque se abre al amanecer o al atardecer, según la hora. Es la experiencia de un momento: se puede volver, pero no hace falta.
+
 ### Herbario de lecturas
 
 Cada etapa de la germinación trae, además de su verso, una lectura breve parafraseada de un autor que piensa la semilla, el instante o el azar: Emanuele Coccia (*La vida de las plantas*), Dōgen (*Uji*, ser-tiempo), Goethe (*La metamorfosis de las plantas*), Borges (*El jardín de senderos que se bifurcan*), Roland Barthes (*La cámara lúcida*: el minuto de tu retrato es único) y C. G. Jung (prólogo al *I Ching* de Wilhelm: el hexagrama retrata el instante). El herbario completo está en «qué es xinas».

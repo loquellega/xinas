@@ -13,7 +13,7 @@ import { musica } from './musica.js';
 const M = musica();
 
 const P = window.Planta, $ = s => document.querySelector(s), clamp = P.clamp;
-const VER = '0.9';
+const VER = '0.10';
 const GATHER = 2800, GROW = 24000;          // ms: la luz se junta en la semilla, luego crece
 /* Endeles vive junto a Xinas en el mismo sitio: /app/xinas/ → /app/endeles/ */
 const ENDELES = /\/app\/xinas\/?/i.test(location.pathname) ? location.pathname.replace(/\/app\/xinas\/?.*$/i, '/app/endeles/') : 'https://hectorcruz.com.mx/app/endeles/';
@@ -35,7 +35,7 @@ const VERSOS = {
   flor:'este instante no se repite. por eso florece.', follaje:'este instante no se repite. por eso florece.',
   yemas:'este instante no se repite. por eso florece.', plenitud:'este instante no se repite. por eso florece.'
 };
-const FIN = 'llévala al bosque. seguirá creciendo cuando la tira ya no exista.';
+const FIN = 'llévala al bosque: ahí puedes mirarla crecer o preguntarle algo. seguirá creciendo cuando la tira ya no exista.';
 /* herbario de lecturas: una voz por etapa, en paráfrasis propia («a partir de») */
 const HERBARIO = [
   { etapas:['semilla'], autor:'Emanuele Coccia', obra:'La vida de las plantas', linea:'la semilla es una vida que espera: guarda el mundo entero plegado hasta encontrar su momento.' },
