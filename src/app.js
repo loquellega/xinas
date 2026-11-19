@@ -10,7 +10,7 @@ const clamp = (v, a=0, b=1) => Math.min(b, Math.max(a, v));
 
 /* ---------------- estado ---------------- */
 const DEF = { zoom:1, cx:.5, cy:.5, exp:0, con:1.1, dit:'atkinson', mode:'multiply', mix:.6, sc2:1.6,
-  l1:'hectorcruz.com.mx', l2:'@hellohectorcruz', base:'https://hectorcruz.com.mx/app/xinas/',
+  l1:'hectorcruz.com.mx', l2:'@hellohectorcruz', l3:'endeles.hectorcruz.com.mx', base:'https://hectorcruz.com.mx/app/xinas/',
   ui:'suave', born:null, place:'', lat:null, lon:null };
 const S = Object.assign({}, DEF);
 try { Object.assign(S, JSON.parse(localStorage.getItem('xinas.v1') || localStorage.getItem('semilla.v1') || '{}')); } catch(e){}
@@ -123,10 +123,9 @@ function renderTira(bits, code, plant, url){
   x.font = FONT(16); x.fillText(String(hx.n), tx + lw + 10, hy + 14);
   // pie
   x.textAlign = 'center';
-  const l1 = (S.l1 || '').trim(), l2 = (S.l2 || '').trim();
-  if (l1){ fitText(x, l1, PW - 12, 16); x.fillText(l1, PW/2, H - 66); }
-  if (l2){ fitText(x, l2, PW - 12, 16); x.fillText(l2, PW/2, H - 46); }
-  x.font = FONT(8); x.fillText('ALCHEMY OF MEANING', PW/2, H - 20);
+  const pie = [S.l1, S.l2, S.l3].map(t => (t || '').trim()).filter(Boolean), y0 = H - 18 - pie.length*18;
+  pie.forEach((t, i) => { fitText(x, t, PW - 12, 16); x.fillText(t, PW/2, y0 + i*18 - 4); });
+  x.font = FONT(8); x.fillText('ALCHEMY OF MEANING', PW/2, H - 16);
   // a 1 bit todo lo que no es foto; luego el retrato tramado
   const id = x.getImageData(0, 0, PW, H), d = id.data;
   for (let i=0;i<PW*H;i++){ const v = d[i*4] < 150 ? 0 : 255; d[i*4] = d[i*4+1] = d[i*4+2] = v; d[i*4+3] = 255; }
@@ -257,12 +256,12 @@ function segGroup(id, key, after){
 }
 function syncSeg(g, v){ g.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v))); }
 segGroup('gDit', 'dit'); segGroup('gMode', 'mode'); segGroup('gCon', 'ui', applyUI);
-for (const [id, k] of [['tL1','l1'], ['tL2','l2'], ['tBase','base'], ['tPlace','place']]){ const i = $('#' + id); i.oninput = () => { S[k] = i.value; dirty = true; }; i.onchange = save; }
+for (const [id, k] of [['tL1','l1'], ['tL2','l2'], ['tL3','l3'], ['tBase','base'], ['tPlace','place']]){ const i = $('#' + id); i.oninput = () => { S[k] = i.value; dirty = true; }; i.onchange = save; }
 function applyUI(){ document.documentElement.dataset.contrast = S.ui === 'alto' ? 'alto' : ''; }
 function syncAll(){
   for (const [id, [k, fmt]] of Object.entries(RANGES)){ const r = $('#' + id); r.value = S[k]; $('#o' + id.slice(1)).textContent = fmt(+S[k]); syncRange(r); }
   syncSeg($('#gDit'), S.dit); syncSeg($('#gMode'), S.mode); syncSeg($('#gCon'), S.ui);
-  $('#tL1').value = S.l1; $('#tL2').value = S.l2; $('#tBase').value = S.base; $('#tPlace').value = S.place || ''; applyUI();
+  $('#tL1').value = S.l1; $('#tL2').value = S.l2; $('#tL3').value = S.l3 || ''; $('#tBase').value = S.base; $('#tPlace').value = S.place || ''; applyUI();
 }
 
 const toggleAj = (on = $('#wAj').hidden) => { $('#wAj').hidden = !on; $('#bAj').setAttribute('aria-pressed', String(on)); };

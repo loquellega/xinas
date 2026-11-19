@@ -13,10 +13,14 @@ import { musica } from './musica.js';
 const M = musica();
 
 const P = window.Planta, $ = s => document.querySelector(s), clamp = P.clamp;
-const VER = '0.11';
+const VER = '0.12';
 const GATHER = 2800, GROW = 24000;          // ms: la luz se junta en la semilla, luego crece
 /* Endeles vive junto a Xinas en el mismo sitio: /app/xinas/ → /app/endeles/ */
-const ENDELES = /\/app\/xinas\/?/i.test(location.pathname) ? location.pathname.replace(/\/app\/xinas\/?.*$/i, '/app/endeles/') : 'https://hectorcruz.com.mx/app/endeles/';
+/* Endeles vive en su propio dominio; mientras no responda, se usa la carpeta de siempre */
+const ENDELES_DOM = 'https://endeles.hectorcruz.com.mx/';
+const ENDELES_DIR = /\/app\/xinas\/?/i.test(location.pathname) ? location.pathname.replace(/\/app\/xinas\/?.*$/i, '/app/endeles/') : 'https://hectorcruz.com.mx/app/endeles/';
+const ENDELES_CANDS = [ENDELES_DOM, ENDELES_DIR, ENDELES_DIR.replace('/endeles/', '/Endeles/')].filter((v, i, a) => a.indexOf(v) === i);
+const ENDELES = ENDELES_DOM;
 
 /* ---------------- semilla ---------------- */
 const DEMO = 'FECN70WHGWZBY';
@@ -518,18 +522,16 @@ $('#xQue').onclick = () => { $('#cQue').hidden = true; };
 /* sembrar en Endeles: solo viajan el número de la semilla y su minuto */
 async function irAlBosque(code, minute, sembrar){
   const body = JSON.stringify({ s:code, t:minute });
-  let base = ENDELES, ok = false;
+  let base = ENDELES_DIR, ok = false;
   // nota para Endeles en este teléfono: si el servidor recorta el enlace, la semilla igual llega
   try { localStorage.setItem('xinas.llegada', JSON.stringify({ s:code, t:minute, en:Date.now() })); } catch(e){}
-  if (sembrar){
-    /* la carpeta puede llamarse endeles o Endeles: se usa la que responda */
-    const cands = [ENDELES, ENDELES.replace('/endeles/', '/Endeles/')].filter((v, i, a) => a.indexOf(v) === i);
-    for (const c of cands){
-      try { const r = await Promise.race([fetch(c + 'semillas.php', { method:'POST', headers:{ 'Content-Type':'application/json' }, body }), new Promise((_, rj) => setTimeout(rj, 6000))]);
-        if (r && r.status !== 404){ base = c; try { const j = await r.json(); ok = !!(j && j.ok); } catch(e){} break; } } catch(e){}
-    }
-    recordar(code, minute, { sem:true, enServidor:ok });
+  /* se usa el primer Endeles que responda: su dominio, o la carpeta endeles / Endeles */
+  for (const c of ENDELES_CANDS){
+    try { const r = await Promise.race([fetch(c + 'semillas.php', sembrar ? { method:'POST', headers:{ 'Content-Type':'text/plain;charset=UTF-8' }, body } : { cache:'no-store' }),
+        new Promise((_, rj) => setTimeout(rj, 4500))]);
+      if (r && r.status !== 404){ base = c; if (sembrar) try { const j = await r.json(); ok = !!(j && j.ok); } catch(e){} break; } } catch(e){}
   }
+  if (sembrar) recordar(code, minute, { sem:true, enServidor:ok });
   const q = 's=' + code + '&t=' + minute.toString(36);
   location.href = base + '?' + q + '#' + q;
 }
