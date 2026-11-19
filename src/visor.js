@@ -13,7 +13,7 @@ import { musica } from './musica.js';
 const M = musica();
 
 const P = window.Planta, $ = s => document.querySelector(s), clamp = P.clamp;
-const VER = '0.10';
+const VER = '0.11';
 const GATHER = 2800, GROW = 24000;          // ms: la luz se junta en la semilla, luego crece
 /* Endeles vive junto a Xinas en el mismo sitio: /app/xinas/ → /app/endeles/ */
 const ENDELES = /\/app\/xinas\/?/i.test(location.pathname) ? location.pathname.replace(/\/app\/xinas\/?.*$/i, '/app/endeles/') : 'https://hectorcruz.com.mx/app/endeles/';
@@ -59,12 +59,13 @@ const holder = new THREE.Group();   // la planta: y hacia arriba, unidades en mm
 /* fondo: la cámara (o la imagen de prueba) en blanco y negro, oscura y con grano; en el jardín, negro */
 const bgScene = new THREE.Scene(), bgCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 const bgMat = new THREE.ShaderMaterial({ depthTest:false, depthWrite:false,
-  uniforms:{ tex:{value:null}, uOn:{value:0}, uVid:{value:new THREE.Vector2(1, 1)}, uScr:{value:new THREE.Vector2(1, 1)}, uT:{value:0} },
+  uniforms:{ tex:{value:null}, uOn:{value:0}, uVid:{value:new THREE.Vector2(1, 1)}, uScr:{value:new THREE.Vector2(1, 1)}, uT:{value:0}, uFit:{value:0} },
   vertexShader:'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }',
-  fragmentShader:`uniform sampler2D tex; uniform float uOn, uT; uniform vec2 uVid, uScr; varying vec2 vUv;
+  fragmentShader:`uniform sampler2D tex; uniform float uOn, uT, uFit; uniform vec2 uVid, uScr; varying vec2 vUv;
     float h(vec2 p){ vec3 q = fract(vec3(p.xyx)*.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y)*q.z); }
     void main(){
-      float s = max(uScr.x/uVid.x, uScr.y/uVid.y); vec2 sz = uVid*s; vec2 p = (vUv*uScr - (uScr - sz)*.5)/sz;
+      float s = mix(max(uScr.x/uVid.x, uScr.y/uVid.y), min(uScr.x/uVid.x, uScr.y/uVid.y), uFit); vec2 sz = uVid*s; vec2 p = (vUv*uScr - (uScr - sz)*.5)/sz;
+      if (p.x < 0. || p.y < 0. || p.x > 1. || p.y > 1.){ gl_FragColor = vec4(vec3(.015), 1.); return; }
       vec3 c = texture2D(tex, p).rgb; float l = dot(c, vec3(.299, .587, .114));
       l = smoothstep(.04, .96, l); l = pow(l, 1.2)*.4 + .012;
       l += (h(gl_FragCoord.xy + floor(uT*24.)*7.) - .5)*.05;
@@ -252,13 +253,18 @@ gGeo.setAttribute('position', new THREE.BufferAttribute(gPos, 3)); gGeo.setAttri
 const gather = new THREE.Points(gGeo, dots(9, 1)); gather.frustumCulled = false; gather.renderOrder = 7; MATS.push(gather.material);
 
 /* ---------------- AR: cámara + QR ---------------- */
+let arT0 = 0;
 let mode = 'jardin', video = null, stream = null, work = null, wctx = null, lastSeen = 0, frameN = 0, hfov = 62, seen = false;
 const pose3 = { has:false, q:new THREE.Quaternion(), t:new THREE.Vector3() };
 let testSrc = null, vidTex = null;
 
+let err = null;
 async function startAR(){
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ msg('Este navegador no da la cámara aquí. Abre el enlace en Safari o Chrome.', 5000); return false; }
-  try { stream = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:{ ideal:'environment' }, width:{ ideal:1280 }, height:{ ideal:720 } } }); }
+  const vert = innerHeight > innerWidth;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:{ ideal:'environment' }, width:{ ideal:vert ? 720 : 1280 }, height:{ ideal:vert ? 1280 : 720 } } }); }
+  catch(e0){ try { stream = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:{ ideal:'environment' } } }); } catch(e){ stream = null; err = e; } }
+  if (!stream) try { throw err; }
   catch(e){ msg(e && e.name === 'NotAllowedError' ? 'Sin permiso para la cámara: la verás sin la tira.' : 'La cámara no está disponible: la verás sin la tira.', 4500); return false; }
   video = $('#video'); video.srcObject = stream; await video.play().catch(() => {});
   if (vidTex) vidTex.dispose(); vidTex = new THREE.VideoTexture(video); bgMat.uniforms.tex.value = vidTex;
@@ -267,7 +273,8 @@ async function startAR(){
 function stopAR(){ if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; if (video) video.srcObject = null; testSrc = null; setMode('jardin'); }
 function setMode(m){
   mode = m; document.body.dataset.mode = m; $('#bModo').textContent = m === 'ar' ? 'verla sin la tira' : 'sobre la tira';
-  if (m === 'ar'){ marker.add(holder); holder.rotation.set(-Math.PI/2, 0, 0); pose3.has = false; seen = false; $('#hint').hidden = false; bloom.threshold = .5; bloom.strength = .55; bloom.radius = .4; }
+  $('#arAyuda').hidden = true; arT0 = m === 'ar' ? performance.now() : 0;
+  if (m === 'ar'){ marker.add(holder); holder.rotation.set(-Math.PI/2, 0, 0); pose3.has = false; seen = false; $('#hint').hidden = false; $('#hint span').textContent = 'busca el QR de tu tira'; bloom.threshold = .5; bloom.strength = .55; bloom.radius = .4; }
   else { garden.add(holder); holder.position.set(0, 0, 0); holder.rotation.set(0, 0, 0); $('#hint').hidden = true; bloom.threshold = .5; bloom.strength = .5; bloom.radius = .35; }
   holder.add(gather);
 }
@@ -296,7 +303,8 @@ function track(now){
   const src = testSrc || video; if (!src) return;
   const vw = src.videoWidth || src.width, vh = src.videoHeight || src.height; if (!vw || !vh) return;
   bgMat.uniforms.uVid.value.set(vw, vh);
-  const W = innerWidth, Hh = innerHeight, s = Math.max(W/vw, Hh/vh), ox = (W - vw*s)/2, oy = (Hh - vh*s)/2;
+  const W = innerWidth, Hh = innerHeight, fit = (vw > vh) !== (W > Hh) ? 1 : 0, s = fit ? Math.min(W/vw, Hh/vh) : Math.max(W/vw, Hh/vh), ox = (W - vw*s)/2, oy = (Hh - vh*s)/2;
+  bgMat.uniforms.uFit.value = fit;
   const k = Math.min(1, 720/Math.max(vw, vh)), ww = Math.round(vw*k), wh = Math.round(vh*k);
   if (!work){ work = document.createElement('canvas'); wctx = work.getContext('2d', { willReadFrequently:true }); }
   if (work.width !== ww || work.height !== wh){ work.width = ww; work.height = wh; }
@@ -317,20 +325,22 @@ function track(now){
   pose3.has = true; lastSeen = now;
   cam.fov = 2*Math.atan((Hh/2)/f)*180/Math.PI; cam.aspect = W/Hh; cam.updateProjectionMatrix();
   holder.position.set(A.x, A.y, 0);
-  $('#hint').hidden = true;
-  if (!seen){ seen = true; germinar(now); }
+  $('#hint').hidden = true; $('#arAyuda').hidden = true;
+  if (!seen){ seen = true; germinar(now); msg('la encontré: no la pierdas de vista', 2600); if (navigator.vibrate) navigator.vibrate(30); }
 }
 
 /* ---------------- bucle ---------------- */
+let calidad = /Android/i.test(navigator.userAgent) ? 1.5 : 2, lentos = 0;
 function resize(){
   const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); composer.setSize(w, h);
-  composer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); bloom.resolution.set(w/2, h/2);
+  composer.setPixelRatio(Math.min(devicePixelRatio || 1, calidad)); bloom.resolution.set(w/2, h/2);
   bgMat.uniforms.uScr.value.set(w, h); cam.aspect = w/h; cam.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
 function frame(now){
   requestAnimationFrame(frame); const _last = frame.last; frame.last = now; if (_last === undefined) frame.last = now;
   if (document.body.dataset.crear) return;
+  if (_last !== undefined && !document.hidden){ const d = now - _last; if (d > 48 && d < 400) lentos++; else if (lentos > 0) lentos -= .25; if (lentos > 90 && calidad > 1){ calidad = 1; lentos = 0; resize(); } }
   const ts = now/1000; for (const m of MATS) m.uniforms.uTime.value = ts; bgMat.uniforms.uT.value = ts;
   // línea de tiempo de la germinación
   let gk = 0;
@@ -368,7 +378,9 @@ function frame(now){
     cam.position.set(0, 0, 0); cam.quaternion.identity(); garden.visible = false;
     if ((frameN++ & 1) === 0 || testSrc) track(now);
     marker.visible = pose3.has; if (pose3.has){ marker.matrix.compose(pose3.t, pose3.q, new THREE.Vector3(1, 1, 1)); marker.matrixWorldNeedsUpdate = true; }
-    if (!pose3.has && now - lastSeen > 1500) $('#hint').hidden = false;
+    if (!pose3.has && now - lastSeen > 1500){ $('#hint').hidden = false; $('#hint span').textContent = seen ? 'la perdí: vuelve a apuntar a la tira' : 'busca el QR de tu tira'; }
+    if (!seen && arT0 && now - arT0 > 12000) $('#arAyuda').hidden = false;
+    if (seen && !pose3.has && (tl.state === 'gather' || tl.state === 'grow')) tl.t0 += now - (_last || now);
   }
   composer.render();
 }
@@ -399,9 +411,11 @@ function misPintar(){
 
 /* ---------------- capas ---------------- */
 function msg(t, ms=2400){ const m = $('#msg'); m.textContent = t; m.hidden = false; clearTimeout(msg.t); msg.t = setTimeout(() => m.hidden = true, ms); }
-const CAPAS = ['#cUmbral', '#cLectura', '#cImprime', '#cGermina', '#cQue'];
-function capa(id){ for (const c of CAPAS) $(c).hidden = c !== id; $('#vivo').hidden = id !== null; }
-function vivo(){ for (const c of CAPAS) $(c).hidden = true; $('#vivo').hidden = false; }
+const CAPAS = ['#cUmbral', '#cCam', '#cLectura', '#cImprime', '#cGermina', '#cQue'];
+const PASO = { '#cUmbral':1, '#cCam':1, '#cLectura':2, '#cImprime':2, '#cGermina':3 };
+function ruta(n){ const r = $('#ruta'); r.hidden = !n; if (n) r.querySelectorAll('i').forEach(i => { const p = +i.dataset.p; i.className = p === n ? 'on' : p < n ? 'ya' : ''; }); }
+function capa(id){ for (const c of CAPAS) $(c).hidden = c !== id; $('#vivo').hidden = id !== null; ruta(PASO[id] || 0); if (id !== '#cCam') camCerrar(); }
+function vivo(){ for (const c of CAPAS) $(c).hidden = true; $('#vivo').hidden = false; ruta(0); camCerrar(); }
 /* el acento de la interfaz es el color de la planta: la interfaz se tiñe del instante */
 function acento(code){
   const b = P.decode(code); if (!b) return; const pal = P.palette(b);
@@ -425,11 +439,34 @@ function pedirLugar(){
   return new Promise(res => navigator.geolocation.getCurrentPosition(p => { X.state.lat = Math.round(p.coords.latitude*100)/100; X.state.lon = Math.round(p.coords.longitude*100)/100; res(); },
     () => res(), { enableHighAccuracy:false, timeout:8000, maximumAge:600000 }));
 }
-function crearSemilla(){ M.callar(1); if (mode === 'ar') stopAR(); $('#fCam').click(); geoP = pedirLugar(); }
-$('#fCam').onchange = async e => {
-  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+function crearSemilla(){ M.callar(1); if (mode === 'ar') stopAR(); geoP = pedirLugar(); camAbrir(); }
+/* el retrato se toma aquí mismo: así la página no se va a otra app (en Android eso la puede recargar) */
+let camS = null, camCara = (() => { try { return localStorage.getItem('xinas.cara') || 'environment'; } catch(e){ return 'environment'; } })();
+async function camAbrir(){
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ $('#fCam').click(); return; }
+  capa('#cCam'); const vd = $('#camV');
+  try { camS = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:{ ideal:camCara }, width:{ ideal:1920 }, height:{ ideal:1920 } } }); }
+  catch(e){ capa('#cUmbral'); msg(e && e.name === 'NotAllowedError' ? 'sin permiso para la cámara: elige una foto.' : 'la cámara no respondió: elige una foto.', 3500); $('#fGal').click(); return; }
+  vd.srcObject = camS; vd.classList.toggle('espejo', camCara === 'user'); await vd.play().catch(() => {});
+}
+function camCerrar(){ if (camS){ camS.getTracks().forEach(t => t.stop()); camS = null; const vd = $('#camV'); if (vd) vd.srcObject = null; } }
+async function usarFoto(f){
   await Promise.race([geoP || Promise.resolve(), new Promise(r => setTimeout(r, 2500))]);
-  try { await window.XINAS.loadFile(f, true); lectura(); } catch(err){ msg('No se pudo abrir esa imagen.'); }
+  try { await window.XINAS.loadFile(f, true); lectura(); } catch(err){ msg('No se pudo abrir esa imagen.'); capa('#cUmbral'); }
+}
+$('#bDisparo').onclick = () => {
+  const vd = $('#camV'), w = vd.videoWidth, hh = vd.videoHeight; if (!w || !hh) return;
+  const k = Math.min(1, 1600/Math.max(w, hh)), c = document.createElement('canvas'); c.width = Math.round(w*k); c.height = Math.round(hh*k);
+  const x = c.getContext('2d'); if (camCara === 'user'){ x.translate(c.width, 0); x.scale(-1, 1); } x.drawImage(vd, 0, 0, c.width, c.height);
+  if (navigator.vibrate) navigator.vibrate(20);
+  c.toBlob(b => { camCerrar(); if (b) usarFoto(new File([b], 'retrato.jpg', { type:'image/jpeg' })); }, 'image/jpeg', .92);
+};
+$('#bCamGiro').onclick = () => { camCara = camCara === 'user' ? 'environment' : 'user'; try { localStorage.setItem('xinas.cara', camCara); } catch(e){} camCerrar(); camAbrir(); };
+$('#bCamX').onclick = () => { camCerrar(); capa('#cUmbral'); };
+$('#bGaleria').onclick = () => $('#fGal').click();
+$('#fGal').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f){ camCerrar(); usarFoto(f); } };
+$('#fCam').onchange = async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return; usarFoto(f);
 };
 
 /* lectura del instante: la tira aparece, los números de la luz se juntan, el hexagrama se forma */
@@ -450,7 +487,7 @@ function lectura(){
   dl.querySelectorAll('dt').forEach((dt, i) => at(700 + i*260, () => { dt.classList.add('ve'); dt.nextElementSibling.classList.add('ve'); }));
   for (let i=0;i<6;i++) at(2700 + i*300, () => hg.querySelector(`[data-i="${i}"]`).classList.add('ve'));
   const code = nice(G.code); for (let i=0;i<=code.length;i++) at(4700 + i*70, () => $('#lCodigo').textContent = code.slice(0, i));
-  at(4700 + code.length*70 + 200, () => { $('#lCodigo').textContent = code + '   ·   ' + hx.n + ' ' + hx.name; });
+  at(4700 + code.length*70 + 200, () => { $('#lCodigo').innerHTML = code + '<span>' + hx.n + ' · ' + hx.name + '</span>'; });
   X.prepareBlob();
   setSeed(G.code, G.minute, false);
 }
@@ -465,7 +502,8 @@ $('#bImpresa').onclick = aGerminar; $('#bSaltar').onclick = aGerminar;
 $('#bMuestra').onclick = () => { M.callar(.5); stopAR(); setSeed(DEMO, P.minuteIndex(Date.now()) - 9*1440, false); capa('#cGermina'); };
 
 /* germina */
-$('#bGerminar').onclick = async () => { M.asegurar(); vivo(); const ok = await startAR(); if (!ok){ setMode('jardin'); germinar(); } };
+$('#bGerminar').onclick = async () => { M.asegurar(); vivo(); tl.state = 'idle'; setVerso(''); const ok = await startAR(); if (!ok){ setMode('jardin'); germinar(); } };
+$('#bArSin').onclick = () => { stopAR(); germinar(); };
 $('#bSinTira').onclick = () => { M.asegurar(); vivo(); stopAR(); germinar(); };
 $('#bRe').onclick = () => { M.asegurar(); M.callar(.6); germinar(); };
 $('#bModo').onclick = async () => { M.asegurar(); M.callar(.6); if (mode === 'ar'){ stopAR(); germinar(); } else { const ok = await startAR(); if (!ok) germinar(); } };
@@ -495,10 +533,12 @@ async function irAlBosque(code, minute, sembrar){
   const q = 's=' + code + '&t=' + minute.toString(36);
   location.href = base + '?' + q + '#' + q;
 }
-$('#bSembrar').onclick = async () => {
-  const b = $('#bSembrar'); b.disabled = true; b.textContent = 'sembrando…'; M.callar(1.2);
+$('#bSembrar').onclick = () => { $('#cPuente').hidden = false; };
+$('#xPuente').onclick = () => { $('#cPuente').hidden = true; };
+$('#bEntrarBosque').onclick = async () => {
+  const b = $('#bEntrarBosque'); b.disabled = true; b.textContent = 'sembrando…'; M.callar(1.2);
   await irAlBosque(seed.code, seed.minute, true);
-  setTimeout(() => { b.disabled = false; b.textContent = 'sembrar en Endeles'; }, 4000);
+  setTimeout(() => { b.disabled = false; b.textContent = 'entrar al bosque'; }, 4000);
 };
 $('#bMis').onclick = $('#bMis2').onclick = () => { misPintar(); $('#cMis').hidden = false; };
 $('#xMis').onclick = () => { $('#cMis').hidden = true; };

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover,interactive-widget=resizes-content">
 <meta name="theme-color" content="#050505">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -42,7 +42,9 @@
 html[data-contrast="alto"]{--a-bar:#fff; --a-line:#fff; --a-line-ctl:#fff; --a-ink:#fff; --a-ink-dim:#cfcfcf}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{margin:0;height:100%;background:var(--a-bg);color:var(--a-ink);font:400 var(--a-size)/1.35 var(--a-font);font-variant-numeric:tabular-nums;overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+html,body{margin:0;height:100%;background:var(--a-bg);color:var(--a-ink);font:400 var(--a-size)/1.35 var(--a-font);font-variant-numeric:tabular-nums;overflow:hidden;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;text-size-adjust:100%;touch-action:manipulation;overscroll-behavior:none}
+button,a,input,label{touch-action:manipulation}
+.centro.texto,.mis,.pasos-cam{touch-action:pan-y}
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--a-accent);outline-offset:1px}
 
@@ -109,7 +111,7 @@ body.hide .win,body.hide #cDock,body.hide .corner,body.hide body.hide
 /* guardar */
 #wSave{left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,calc(100% - 20px));max-height:calc(100% - 40px);display:flex;flex-direction:column;z-index:8}
 #wSave .body{overflow:auto}
-#saveImg{width:100%;max-height:52vh;object-fit:contain;image-rendering:pixelated;background:#fff;border:1px solid var(--a-line)}
+#saveImg{width:100%;max-height:52vh;max-height:52dvh;object-fit:contain;image-rendering:pixelated;background:#fff;border:1px solid var(--a-line)}
 .acts{display:flex;gap:6px}.acts .btn{flex:1}
 .cred,#cred{font-size:10px;color:var(--a-ink-dim);line-height:1.5}
 .cred a,#cred a{color:var(--a-ink)}
@@ -192,7 +194,7 @@ body[data-mode=ar] #story{bottom:auto;top:calc(var(--sat) + 44px)}
 #capas .capa.velo{background:rgba(5,5,5,.985);z-index:14}
 #capas .capa[hidden]{display:none!important}
 .centro{max-width:420px;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:18px}
-.centro.texto{text-align:left;align-items:flex-start;gap:12px;max-height:calc(100vh - 60px);overflow:auto;scrollbar-width:thin;scrollbar-color:var(--a-line-ctl) transparent}
+.centro.texto{text-align:left;align-items:flex-start;gap:12px;max-height:calc(100vh - 60px);max-height:calc(100dvh - 60px);overflow:auto;scrollbar-width:thin;scrollbar-color:var(--a-line-ctl) transparent}
 .centro.texto p{margin:0;font-size:15px;line-height:1.55;color:var(--a-ink)}
 .nombre{margin:0;font-weight:300;font-size:44px;letter-spacing:.2em;color:var(--a-ink-strong);text-transform:lowercase}
 h2.nombre{font-size:22px;letter-spacing:.12em}
@@ -220,10 +222,11 @@ h2.nombre{font-size:22px;letter-spacing:.12em}
 .hexg i{display:block;height:5px;background:var(--a-ink-strong);opacity:0;transform:scaleX(.2);transition:opacity .6s,transform .6s}
 .hexg i.n{background:linear-gradient(90deg,var(--a-ink-strong) 40%,transparent 40% 60%,var(--a-ink-strong) 60%)}
 .hexg i.ve{opacity:1;transform:none}
-.codigo{font-size:18px;letter-spacing:.14em;color:var(--semilla-ink);min-height:24px}
+.codigo{font-size:18px;letter-spacing:.14em;color:var(--semilla-ink);min-height:24px;overflow-wrap:anywhere}
+.codigo span{display:block;font-size:12px;letter-spacing:.06em;color:var(--a-ink);margin-top:4px}
 @media (max-width:560px){.lect{flex-direction:column;gap:14px}#lTira{width:44vw}.datos{width:100%}}
 /* mis semillas */
-.mis{max-height:calc(100vh - 80px);overflow:auto;scrollbar-width:thin;scrollbar-color:var(--a-line-ctl) transparent}
+.mis{max-height:calc(100vh - 80px);max-height:calc(100dvh - 80px);overflow:auto;scrollbar-width:thin;scrollbar-color:var(--a-line-ctl) transparent}
 #misLista{list-style:none;margin:0;padding:0;display:grid;gap:10px;width:100%}
 #misLista li{display:grid;grid-template-columns:64px 1fr;gap:4px 12px;align-items:center;border-top:1px solid var(--a-line);padding-top:10px}
 #misLista .mini{width:64px;height:64px;border-radius:6px;grid-row:span 2}
@@ -250,7 +253,40 @@ body:has(#vivo:not([hidden])) #grid{display:none}
 #vFin{position:absolute;left:0;right:0;bottom:calc(var(--sab) + 18px);pointer-events:auto}
 #vFin .liga{text-shadow:0 0 8px #000}
 body[data-mode=ar] #vivo .crece{bottom:calc(var(--sab) + 100px)}
-body.fin #verso{bottom:calc(var(--sab) + 150px)}
+body.fin #verso{bottom:calc(var(--sab) + 196px)}
+body:has(#ruta:not([hidden])) #capas .capa:not(#cCam){padding-top:calc(var(--sat) + 46px)}
+/* fondos para leer sobre la cámara */
+#vivo::before,#vivo::after{content:"";position:absolute;left:0;right:0;pointer-events:none;z-index:-1}
+#vivo::before{top:0;height:calc(var(--sat) + 190px);background:linear-gradient(rgba(0,0,0,.72),rgba(0,0,0,0))}
+#vivo::after{bottom:0;height:calc(var(--sab) + 260px);background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.78))}
+/* el recorrido */
+#ruta{position:fixed;top:calc(var(--sat) + 12px);left:0;right:0;z-index:13;display:flex;justify-content:center;gap:6px;font-size:11px;letter-spacing:.06em;color:var(--a-ink-dim);pointer-events:none}
+#ruta[hidden]{display:none}
+#ruta i{font-style:normal;opacity:.55}#ruta i.ya{opacity:.85}#ruta i.on{opacity:1;color:var(--semilla-ink)}
+#ruta b{font-weight:400;opacity:.35}
+/* cámara del retrato */
+#cCam{padding:0!important;background:#000!important;justify-content:flex-end!important}
+#camV{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000}
+#camV.espejo{transform:scaleX(-1)}
+#cCam .marco{position:absolute;left:12%;right:12%;top:calc(var(--sat) + 70px);bottom:calc(var(--sab) + 170px);border:1px solid rgba(255,255,255,.35);border-radius:46% 46% 40% 40%/38% 38% 30% 30%;pointer-events:none}
+#cCam .guia{position:absolute;top:calc(var(--sat) + 40px);left:20px;right:20px;text-align:center;font-size:13px;color:#fff;text-shadow:0 0 8px #000}
+#cCam .barra{position:relative;width:100%;display:flex;align-items:center;justify-content:space-around;padding:18px 18px calc(var(--sab) + 22px);background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.85) 40%)}
+#bDisparo{width:74px;height:74px;border-radius:50%;border:2px solid #fff;background:var(--semilla-bg);box-shadow:0 0 0 6px rgba(255,255,255,.12);cursor:pointer}
+#bDisparo:active{transform:scale(.94)}
+#cCam .barra .liga{color:#fff;min-width:74px}
+/* cómo germinar */
+.pasos-cam{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;text-align:left;width:100%}
+.pasos-cam svg{width:92px;height:auto}
+.pasos-cam ol{margin:0;padding-left:18px;font-size:13px;line-height:1.55;color:var(--a-ink)}
+/* ayuda en realidad aumentada */
+#arAyuda{position:absolute;left:20px;right:20px;top:calc(42% + 120px);text-align:center;pointer-events:auto;display:grid;gap:6px;justify-items:center}
+#arAyuda[hidden]{display:none}
+#arAyuda p{margin:0;font-size:13px;line-height:1.5;color:#fff;text-shadow:0 0 8px #000,0 0 2px #000}
+#hint small{position:absolute;top:-34px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:11px;color:#fff;opacity:.85}
+/* el paso a Endeles */
+.puente p{margin:0;font-size:15px;line-height:1.55;color:var(--a-ink)}
+.puente .gesto{display:flex;gap:18px;justify-content:center;font-size:12px;color:var(--a-ink-dim);text-align:center}
+.puente .gesto b{display:block;font-weight:400;font-size:20px;color:var(--a-ink-strong)}
 </style>
 </head>
 <body data-mode="jardin">
@@ -258,7 +294,8 @@ body.fin #verso{bottom:calc(var(--sab) + 150px)}
 <img id="testbg" hidden alt="">
 <canvas id="gl"></canvas>
 <div id="grid"></div>
-<div id="hint" hidden><span>apunta al QR de la tira</span></div>
+<div id="hint" hidden><small>a 20–30 cm, de frente</small><span>busca el QR de tu tira</span></div>
+<div id="ruta" hidden><i data-p="1">1 retrato</i><b>·</b><i data-p="2">2 tira</i><b>·</b><i data-p="3">3 germinar</i><b>·</b><i data-p="4">4 sembrar</i></div>
 <div id="msg" role="status" aria-live="polite" hidden></div>
 
 <section class="win" id="wInfo" aria-label="la semilla" hidden>
@@ -284,6 +321,15 @@ body.fin #verso{bottom:calc(var(--sab) + 150px)}
     </div>
     <nav class="pie"><button class="liga" id="bMis" hidden>mis semillas</button><button class="liga" id="bMuestra">ver una semilla</button><button class="liga" id="bQue1">qué es xinas</button><button class="liga" id="bAfinar0">afinar</button></nav>
   </section>
+
+  <section class="capa" id="cCam" hidden>
+    <video id="camV" playsinline muted autoplay></video>
+    <div class="marco"></div>
+    <p class="guia">el rostro dentro del óvalo, con luz de frente. quédate quieto.</p>
+    <div class="barra"><button class="liga" id="bCamX">cancelar</button><button id="bDisparo" aria-label="tomar el retrato"></button><button class="liga" id="bCamGiro">girar</button></div>
+    <button class="liga" id="bGaleria" style="position:absolute;bottom:calc(var(--sab) + 4px);left:0;right:0;color:#ccc;font-size:12px">o elegir una foto de la galería</button>
+  </section>
+  <input type="file" id="fGal" accept="image/*" hidden>
 
   <section class="capa" id="cLectura" hidden>
     <div class="lect">
@@ -314,8 +360,12 @@ body.fin #verso{bottom:calc(var(--sab) + 150px)}
     <div class="centro">
       <p class="marca" id="gMarca">semilla nº —</p>
       <p class="verso">lo que se borra en el papel, crece aquí.</p>
-      <button class="grande" id="bGerminar">toca para germinar</button>
-      <button class="liga" id="bSinTira">verla sin la tira</button>
+      <div class="pasos-cam">
+        <svg viewBox="0 0 92 120" aria-hidden="true"><rect x="20" y="70" width="52" height="44" fill="#ddd" transform="skewX(-14) translate(14 0)"/><rect x="38" y="88" width="16" height="16" fill="#111" transform="skewX(-14) translate(14 0)"/><rect x="28" y="4" width="36" height="58" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M46 62 L46 84" stroke="currentColor" stroke-dasharray="3 3"/><path d="M46 92 c-8 -14 2 -22 -2 -34 M46 80 c6 -6 10 -6 14 -12" fill="none" stroke="var(--semilla)" stroke-width="1.6"/></svg>
+        <ol><li>pon la tira sobre una mesa, con luz.</li><li>sostén el teléfono a 20–30 cm, de frente.</li><li>que el QR quede en el marco y no lo pierdas de vista: la planta crece <i>sobre</i> la tira.</li></ol>
+      </div>
+      <button class="grande" id="bGerminar">abrir la cámara y germinar</button>
+      <button class="liga" id="bSinTira">no tengo la tira: verla aquí</button>
       <p class="sub">con sonido · en iPhone quita el modo silencio</p>
     </div>
   </section>
@@ -325,8 +375,20 @@ body.fin #verso{bottom:calc(var(--sab) + 150px)}
     <p id="lectura"></p>
     <p class="verso" id="verso"></p>
     <div class="crece"><i id="vAge"></i></div>
+    <div id="arAyuda" hidden><p>acércate un poco y busca más luz. el QR debe verse completo y nítido.</p><button class="liga" id="bArSin">verla sin la tira</button></div>
     <nav class="acciones" id="vFin" hidden><button class="grande" id="bSembrar">sembrar en Endeles</button>
       <div class="fila"><button class="liga" id="bRe">volver a crecer</button><button class="liga" id="bModo">sobre la tira</button><button class="liga" id="bMis2">mis semillas</button><button class="liga" id="bQue2">qué es xinas</button><button class="liga" id="bCrear">crear semilla</button></div></nav>
+  </section>
+
+  <section class="capa velo" id="cPuente" hidden>
+    <div class="centro texto puente">
+      <h2 class="nombre">sembrar en Endeles</h2>
+      <p>Endeles es un bosque en blanco y negro donde se siembran las semillas. tu planta te espera en un claro y seguirá creciendo ahí, cada día.</p>
+      <p>al llegar puedes solo mirarla crecer, o preguntarle algo y caminar entre las seis líneas de su hexagrama. al final, el bosque se abre.</p>
+      <div class="gesto"><span><b>◐</b>pulgar izquierdo<br>caminar</span><span><b>↔</b>arrastrar a la derecha<br>mirar</span><span><b>🎧</b>mejor con<br>audífonos</span></div>
+      <button class="grande" id="bEntrarBosque" style="align-self:center">entrar al bosque</button>
+      <button class="liga" id="xPuente" style="align-self:center">quedarme aquí</button>
+    </div>
   </section>
 
   <section class="capa velo" id="cMis" hidden>
