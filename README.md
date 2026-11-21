@@ -76,6 +76,14 @@ Each stage of sprouting brings, besides its verse, a short paraphrased reading f
 
 Add it to the home screen from Safari (Share › Add to Home Screen): it opens full screen, with its icon and launch screen, and works offline. Upload `index.html`, `manifest.webmanifest`, `sw.js` and `iconos/` to `https://hectorcruz.com.mx/app/xinas/`, with Endeles and its `semillas.php` in `…/app/endeles/`. Serve both over HTTPS. Build from source with `npm install && python3 build.py`.
 
+## Idiomas · Languages · Langues
+
+Xinas habla español, inglés y francés. Elige el idioma del teléfono y se puede cambiar abajo en el umbral (es · en · fr); al sembrar, Endeles se abre en el mismo idioma. Los textos están en `src/i18n/en.json` y `src/i18n/fr.json`, con la frase en español como clave.
+
+Xinas speaks Spanish, English and French. It follows the phone’s language and can be switched at the bottom of the threshold (es · en · fr); Endeles opens in the same language.
+
+**En français.** Un portrait et son instant (la minute, le lieu approximatif, la lecture de la lumière) deviennent une graine unique, imprimée sur une bande thermique de 58 × 88 mm avec un QR. En scannant la bande, une plante de lumière germe sur le papier, avec des vers et une musique propres à la graine. On peut ensuite la planter dans Endeles, où elle continue de pousser.
+
 ## Capturas / Screenshots
 
 | | | |

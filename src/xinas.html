@@ -287,6 +287,10 @@ body:has(#ruta:not([hidden])) #capas .capa:not(#cCam){padding-top:calc(var(--sat
 .puente p{margin:0;font-size:15px;line-height:1.55;color:var(--a-ink)}
 .puente .gesto{display:flex;gap:18px;justify-content:center;font-size:12px;color:var(--a-ink-dim);text-align:center}
 .puente .gesto b{display:block;font-weight:400;font-size:20px;color:var(--a-ink-strong)}
+#selIdioma{position:absolute;left:0;right:0;bottom:calc(var(--sab) + 50px)}
+.idioma{display:flex;gap:4px;justify-content:center;align-items:center;font-size:11px;letter-spacing:.08em;color:var(--a-ink-dim)}
+.idioma button{background:none;border:0;color:var(--a-ink-dim);font:inherit;padding:8px 6px;min-height:32px;cursor:pointer;text-transform:lowercase}
+.idioma button.on{color:var(--semilla-ink);text-decoration:underline;text-underline-offset:4px}
 </style>
 </head>
 <body data-mode="jardin">
@@ -320,6 +324,7 @@ body:has(#ruta:not([hidden])) #capas .capa:not(#cCam){padding-top:calc(var(--sat
       <p class="sub">quédate quieto. la luz que te toca ahora es tuya.</p>
     </div>
     <nav class="pie"><button class="liga" id="bMis" hidden>mis semillas</button><button class="liga" id="bMuestra">ver una semilla</button><button class="liga" id="bQue1">qué es xinas</button><button class="liga" id="bAfinar0">afinar</button></nav>
+    <nav class="idioma" id="selIdioma" aria-label="idioma"></nav>
   </section>
 
   <section class="capa" id="cCam" hidden>
@@ -411,6 +416,7 @@ body:has(#ruta:not([hidden])) #capas .capa:not(#cCam){padding-top:calc(var(--sat
       <p class="verso">lo impermanente, en el papel. lo que permanece, en el bosque.</p>
       <h2 class="nombre" style="font-size:15px;margin-top:10px">herbario de lecturas</h2>
       <div class="herbario" id="herbario"></div>
+      <nav class="idioma" id="selIdioma2" aria-label="idioma"></nav>
       <button class="liga" id="xQue">cerrar</button>
     </div>
   </section>
@@ -495,6 +501,10 @@ body:has(#ruta:not([hidden])) #capas .capa:not(#cCam){padding-top:calc(var(--sat
 <input type="file" id="f1" accept="image/*" hidden>
 <input type="file" id="f2" accept="image/*" hidden>
 </div>
+<script>
+/*IDIOMA*/
+IDIOMA.aplicar();
+</script>
 <script>
 /*PLANTA*/
 </script>

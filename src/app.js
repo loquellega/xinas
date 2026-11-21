@@ -160,12 +160,12 @@ function showReadings(){
   const P = G.plant.P;
   const hx = hexagram(G.f);
   $('#lPlant').textContent = `${P.levels + 1} niveles · ${P.orn} · giro ${Math.round(P.twist/D2R)}° · hexagrama ${hx.n}, ${hx.name}`;
-  const q = S._qr; $('#lQR').textContent = q ? `QR ${q.n}×${q.n} módulos · ${q.m} px por módulo · ${q.mm} mm · ${G.url.length} caracteres` : 'el enlace es demasiado largo para el QR';
+  const q = S._qr; $('#lQR').textContent = q ? tr('QR {n}×{n} módulos · {m} px por módulo · {mm} mm · {c} caracteres', {n:q.n, m:q.m, mm:q.mm, c:G.url.length}) : tr('el enlace es demasiado largo para el QR');
   $('#cTR').textContent = `${PW} × ${TH} px · 58 × ${TH/DPMM} mm`;
   const w = S.born ? new Date(S.born) : new Date();
   $('#lWhen').textContent = `${fmtDate(w)} · ${fmtTime(w)}` + (S.lat != null ? ` · ${S.lat.toFixed(2)}, ${S.lon.toFixed(2)}` : '');
   $('#oWhen').textContent = `${fmtDate(w)} · ${fmtTime(w)}`;
-  $('#oGeo').textContent = S.lat != null ? `${S.lat.toFixed(2)}, ${S.lon.toFixed(2)}` : 'sin ubicación';
+  $('#oGeo').textContent = S.lat != null ? `${S.lat.toFixed(2)}, ${S.lon.toFixed(2)}` : tr('sin ubicación');
 }
 
 /* ---------------- dibujo en pantalla ---------------- */
@@ -223,21 +223,21 @@ async function loadFile(f, fresh){
 }
 $('#f1').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try { await loadFile(f); msg('semilla nueva'); } catch(err){ msg('No se pudo abrir esa imagen.'); }
+  try { await loadFile(f); msg(tr('semilla nueva')); } catch(err){ msg(tr('No se pudo abrir esa imagen.')); }
 };
 $('#f2').onchange = async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try { img2 = await loadImg(f); $('#b2x').disabled = false; dirty = true; msg('fusión activa'); } catch(err){ msg('No se pudo abrir esa imagen.'); }
+  try { img2 = await loadImg(f); $('#b2x').disabled = false; dirty = true; msg(tr('fusión activa')); } catch(err){ msg(tr('No se pudo abrir esa imagen.')); }
 };
 $('#bFoto').onclick = () => $('#f1').click();
 $('#b2').onclick = () => $('#f2').click();
 $('#b2x').onclick = () => { img2 = null; $('#b2x').disabled = true; dirty = true; };
-$('#bNow').onclick = () => { S.born = Date.now(); dirty = true; save(); msg('instante: ahora'); };
+$('#bNow').onclick = () => { S.born = Date.now(); dirty = true; save(); msg(tr('instante: ahora')); };
 $('#bGeo').onclick = () => {
-  if (!navigator.geolocation){ msg('Este navegador no da la ubicación.'); return; }
-  msg('buscando ubicación…', 0);
-  navigator.geolocation.getCurrentPosition(p => { S.lat = Math.round(p.coords.latitude*100)/100; S.lon = Math.round(p.coords.longitude*100)/100; dirty = true; save(); msg('ubicación aproximada (~1 km)'); },
-    () => msg('Sin permiso de ubicación. Puedes escribir el lugar.', 3500), { enableHighAccuracy:false, timeout:10000, maximumAge:600000 });
+  if (!navigator.geolocation){ msg(tr('Este navegador no da la ubicación.')); return; }
+  msg(tr('buscando ubicación…'), 0);
+  navigator.geolocation.getCurrentPosition(p => { S.lat = Math.round(p.coords.latitude*100)/100; S.lon = Math.round(p.coords.longitude*100)/100; dirty = true; save(); msg(tr('ubicación aproximada (~1 km)')); },
+    () => msg(tr('Sin permiso de ubicación. Puedes escribir el lugar.'), 3500), { enableHighAccuracy:false, timeout:10000, maximumAge:600000 });
 };
 $('#bGeoX').onclick = () => { S.lat = S.lon = null; dirty = true; save(); };
 
@@ -282,7 +282,7 @@ const dlP = (window.claude && typeof window.claude.use === 'function') ? window.
 $('#bSave').onclick = async () => {
   if (dirty) compute();
   blob = await new Promise(r => G.tira.toBlob(r, 'image/png'));
-  if (!blob){ msg('No se pudo generar la imagen.'); return; }
+  if (!blob){ msg(tr('No se pudo generar la imagen.')); return; }
   if (blobURL) URL.revokeObjectURL(blobURL); blobURL = URL.createObjectURL(blob);
   fname = `xinas-${G.code}.png`;
   $('#saveImg').src = blobURL;
@@ -299,19 +299,19 @@ async function prepareBlob(){
 /* guarda la tira: en iPhone abre la hoja de compartir («Guardar imagen» la manda a Fotos) */
 async function saveTira(){
   if (!blob) await prepareBlob();
-  if (!blob){ msg('No se pudo generar la imagen.'); return false; }
+  if (!blob){ msg(tr('No se pudo generar la imagen.')); return false; }
   const dl = await dlP;
   if (dl){ try { await dl.save({filename:fname, data:blob}); return true; } catch(e){ return false; } }
   const file = new File([blob], fname, {type:'image/png'});
-  if (navigator.canShare && navigator.canShare({files:[file]})){ try { await navigator.share({files:[file]}); return true; } catch(e){ return e.name === 'AbortError' ? false : (msg('No se pudo compartir.'), false); } }
+  if (navigator.canShare && navigator.canShare({files:[file]})){ try { await navigator.share({files:[file]}); return true; } catch(e){ return e.name === 'AbortError' ? false : (msg(tr('No se pudo compartir.')), false); } }
   const a = document.createElement('a'); a.href = blobURL; a.download = fname; document.body.append(a); a.click(); a.remove(); return true;
 }
 $('#bShare').onclick = async () => {
   if (!blob) return;
   const dl = await dlP;
-  if (dl){ try { await dl.save({filename:fname, data:blob}); msg('Imagen guardada.'); } catch(e){ if (e && e.code !== 'declined') msg('No se pudo guardar en esta vista.'); } return; }
+  if (dl){ try { await dl.save({filename:fname, data:blob}); msg(tr('Imagen guardada.')); } catch(e){ if (e && e.code !== 'declined') msg(tr('No se pudo guardar en esta vista.')); } return; }
   const file = new File([blob], fname, {type:'image/png'});
-  if (navigator.canShare && navigator.canShare({files:[file]})){ try { await navigator.share({files:[file]}); } catch(e){ if (e.name !== 'AbortError') msg('No se pudo compartir.'); } return; }
+  if (navigator.canShare && navigator.canShare({files:[file]})){ try { await navigator.share({files:[file]}); } catch(e){ if (e.name !== 'AbortError') msg(tr('No se pudo compartir.')); } return; }
   const a = document.createElement('a'); a.href = blobURL; a.download = fname; document.body.append(a); a.click(); a.remove();
 };
 
@@ -320,7 +320,7 @@ function bornMinute(){ return minuteIndex(S.born || Date.now()); }
 function open(){
   if (isOpen) return; isOpen = true; $('#crear').hidden = false; document.body.dataset.crear = '1'; resize();
   dirty = true; requestAnimationFrame(frame);
-  if (demo) msg('semilla de muestra · toca foto para sembrar la tuya', 4000);
+  if (demo) msg(tr('semilla de muestra · toca foto para sembrar la tuya'), 4000);
 }
 function close(){ if (!isOpen) return; isOpen = false; $('#crear').hidden = true; $('#wSave').hidden = true; delete document.body.dataset.crear; }
 function verCrecer(){ if (dirty) compute(); close(); blob = null; if (window.CAPAS) window.CAPAS.lectura(); }

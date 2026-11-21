@@ -13,7 +13,7 @@ import { musica } from './musica.js';
 const M = musica();
 
 const P = window.Planta, $ = s => document.querySelector(s), clamp = P.clamp;
-const VER = '0.12';
+const VER = '0.13';
 const GATHER = 2800, GROW = 24000;          // ms: la luz se junta en la semilla, luego crece
 /* Endeles vive junto a Xinas en el mismo sitio: /app/xinas/ → /app/endeles/ */
 /* Endeles vive en su propio dominio; mientras no responda, se usa la carpeta de siempre */
@@ -30,24 +30,24 @@ if (!seed) seed = { code:DEMO, minute:P.minuteIndex(Date.now()) - 9*1440 };
 let plant, hex, daysOld = 0, unitMM = 1, ageShown = 0;
 
 const VERSOS = {
-  semilla:'cada instante guarda una semilla.',
-  'raíz':'antes de subir, aprende a sostenerse.',
-  brote:'abre sus primeras hojas: está aprendiendo la luz.',
-  tallo:'busca hacia arriba lo que la foto dejó encendido.',
-  ramas:'cada rama es un camino que el instante ya sabía.',
-  hojas:'respira. lo que viste se volvió follaje.',
-  flor:'este instante no se repite. por eso florece.', follaje:'este instante no se repite. por eso florece.',
-  yemas:'este instante no se repite. por eso florece.', plenitud:'este instante no se repite. por eso florece.'
+  semilla:tr('cada instante guarda una semilla.'),
+  'raíz':tr('antes de subir, aprende a sostenerse.'),
+  brote:tr('abre sus primeras hojas: está aprendiendo la luz.'),
+  tallo:tr('busca hacia arriba lo que la foto dejó encendido.'),
+  ramas:tr('cada rama es un camino que el instante ya sabía.'),
+  hojas:tr('respira. lo que viste se volvió follaje.'),
+  flor:tr('este instante no se repite. por eso florece.'), follaje:tr('este instante no se repite. por eso florece.'),
+  yemas:tr('este instante no se repite. por eso florece.'), plenitud:tr('este instante no se repite. por eso florece.')
 };
-const FIN = 'llévala al bosque: ahí puedes mirarla crecer o preguntarle algo. seguirá creciendo cuando la tira ya no exista.';
+const FIN = tr('llévala al bosque: ahí puedes mirarla crecer o preguntarle algo. seguirá creciendo cuando la tira ya no exista.');
 /* herbario de lecturas: una voz por etapa, en paráfrasis propia («a partir de») */
 const HERBARIO = [
-  { etapas:['semilla'], autor:'Emanuele Coccia', obra:'La vida de las plantas', linea:'la semilla es una vida que espera: guarda el mundo entero plegado hasta encontrar su momento.' },
-  { etapas:['raíz'], autor:'Dōgen', obra:'Uji (ser-tiempo)', linea:'el tiempo no pasa junto a las cosas: cada cosa es su tiempo. este instante está completo.' },
-  { etapas:['brote', 'tallo'], autor:'Goethe', obra:'La metamorfosis de las plantas', linea:'toda la planta es una sola forma que se transforma: la hoja se vuelve tallo, cáliz, pétalo y semilla.' },
-  { etapas:['ramas'], autor:'Jorge Luis Borges', obra:'El jardín de senderos que se bifurcan', linea:'el tiempo se bifurca hacia innumerables futuros; cada rama es uno de ellos.' },
-  { etapas:['hojas'], autor:'Roland Barthes', obra:'La cámara lúcida', linea:'una fotografía no cuenta lo que fue: certifica que fue. el minuto de tu retrato es único y ya pasó; por eso queda.' },
-  { etapas:['flor', 'follaje', 'yemas', 'plenitud'], autor:'Carl Gustav Jung', obra:'prólogo al I Ching de Richard Wilhelm', linea:'lo que nace en un momento lleva la cualidad de ese momento. el hexagrama no predice: retrata el instante.' }
+  { etapas:['semilla'], autor:'Emanuele Coccia', obra:tr('La vida de las plantas'), linea:tr('la semilla es una vida que espera: guarda el mundo entero plegado hasta encontrar su momento.') },
+  { etapas:['raíz'], autor:'Dōgen', obra:tr('Uji (ser-tiempo)'), linea:tr('el tiempo no pasa junto a las cosas: cada cosa es su tiempo. este instante está completo.') },
+  { etapas:['brote', 'tallo'], autor:'Goethe', obra:tr('La metamorfosis de las plantas'), linea:tr('toda la planta es una sola forma que se transforma: la hoja se vuelve tallo, cáliz, pétalo y semilla.') },
+  { etapas:['ramas'], autor:'Jorge Luis Borges', obra:tr('El jardín de senderos que se bifurcan'), linea:tr('el tiempo se bifurca hacia innumerables futuros; cada rama es uno de ellos.') },
+  { etapas:['hojas'], autor:'Roland Barthes', obra:tr('La cámara lúcida'), linea:tr('una fotografía no cuenta lo que fue: certifica que fue. el minuto de tu retrato es único y ya pasó; por eso queda.') },
+  { etapas:['flor', 'follaje', 'yemas', 'plenitud'], autor:'Carl Gustav Jung', obra:tr('prólogo al I Ching de Richard Wilhelm'), linea:tr('lo que nace en un momento lleva la cualidad de ese momento. el hexagrama no predice: retrata el instante.') }
 ];
 const lecturaDe = st => HERBARIO.find(h => h.etapas.includes(st)) || null;
 
@@ -228,8 +228,8 @@ function showInfo(){
   $('#iDays').textContent = Math.floor(daysOld);
   const hx = $('#iHex'); hx.innerHTML = '';
   for (let i=5;i>=0;i--){ const r = document.createElement('i'); r.className = hex.lines[i] ? 'y' : 'n'; hx.append(r); }
-  $('#iHexN').textContent = `${hex.n} · ${hex.name}`;
-  $('#gMarca').textContent = $('#vMarca').textContent = 'semilla nº ' + nice(seed.code);
+  $('#iHexN').textContent = `${hex.n} · ${tr(hex.name)}`;
+  $('#gMarca').textContent = $('#vMarca').textContent = tr('semilla nº') + ' ' + nice(seed.code);
 }
 
 /* ---------------- jardín (sin cámara) ---------------- */
@@ -248,7 +248,7 @@ const tl = { state:'idle', t0:0, verso:'' };
 function germinar(now = performance.now()){ if (seed.code !== DEMO) recordar(seed.code, seed.minute); M.preparar(P.decode(seed.code), hex.n, plant); M.empezar(); tl.state = 'gather'; tl.t0 = now; ageShown = 0; setVerso(''); $('#vFin').hidden = true; document.body.classList.remove('fin'); }
 function setVerso(t, lec){ if (tl.verso === t) return; tl.verso = t; const v = $('#verso'), l = $('#lectura'); v.classList.remove('ve'); l.classList.remove('ve'); clearTimeout(setVerso.k);
   setVerso.k = setTimeout(() => { v.textContent = t; if (t) v.classList.add('ve');
-    if (lec){ l.innerHTML = `${lec.linea}<span>a partir de ${lec.autor}, <i>${lec.obra}</i></span>`; l.classList.add('ve'); } }, t ? 700 : 0); }
+    if (lec){ l.innerHTML = `${lec.linea}<span>${tr('a partir de')} ${lec.autor}, <i>${lec.obra}</i></span>`; l.classList.add('ve'); } }, t ? 700 : 0); }
 const ease = x => x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3)/2;
 /* luz que se junta: puntos que caen hacia la semilla antes de que nazca la raíz */
 const NG = 90, gGeo = new THREE.BufferGeometry(), gPos = new Float32Array(NG*3), gFrom = [];
@@ -264,21 +264,21 @@ let testSrc = null, vidTex = null;
 
 let err = null;
 async function startAR(){
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ msg('Este navegador no da la cámara aquí. Abre el enlace en Safari o Chrome.', 5000); return false; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ msg(tr('Este navegador no da la cámara aquí. Abre el enlace en Safari o Chrome.'), 5000); return false; }
   const vert = innerHeight > innerWidth;
   try { stream = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:{ ideal:'environment' }, width:{ ideal:vert ? 720 : 1280 }, height:{ ideal:vert ? 1280 : 720 } } }); }
   catch(e0){ try { stream = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:{ ideal:'environment' } } }); } catch(e){ stream = null; err = e; } }
   if (!stream) try { throw err; }
-  catch(e){ msg(e && e.name === 'NotAllowedError' ? 'Sin permiso para la cámara: la verás sin la tira.' : 'La cámara no está disponible: la verás sin la tira.', 4500); return false; }
+  catch(e){ msg(tr(e && e.name === 'NotAllowedError' ? 'Sin permiso para la cámara: la verás sin la tira.' : 'La cámara no está disponible: la verás sin la tira.'), 4500); return false; }
   video = $('#video'); video.srcObject = stream; await video.play().catch(() => {});
   if (vidTex) vidTex.dispose(); vidTex = new THREE.VideoTexture(video); bgMat.uniforms.tex.value = vidTex;
   setMode('ar'); return true;
 }
 function stopAR(){ if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; if (video) video.srcObject = null; testSrc = null; setMode('jardin'); }
 function setMode(m){
-  mode = m; document.body.dataset.mode = m; $('#bModo').textContent = m === 'ar' ? 'verla sin la tira' : 'sobre la tira';
+  mode = m; document.body.dataset.mode = m; $('#bModo').textContent = tr(m === 'ar' ? 'verla sin la tira' : 'sobre la tira');
   $('#arAyuda').hidden = true; arT0 = m === 'ar' ? performance.now() : 0;
-  if (m === 'ar'){ marker.add(holder); holder.rotation.set(-Math.PI/2, 0, 0); pose3.has = false; seen = false; $('#hint').hidden = false; $('#hint span').textContent = 'busca el QR de tu tira'; bloom.threshold = .5; bloom.strength = .55; bloom.radius = .4; }
+  if (m === 'ar'){ marker.add(holder); holder.rotation.set(-Math.PI/2, 0, 0); pose3.has = false; seen = false; $('#hint').hidden = false; $('#hint span').textContent = tr('busca el QR de tu tira'); bloom.threshold = .5; bloom.strength = .55; bloom.radius = .4; }
   else { garden.add(holder); holder.position.set(0, 0, 0); holder.rotation.set(0, 0, 0); $('#hint').hidden = true; bloom.threshold = .5; bloom.strength = .5; bloom.radius = .35; }
   holder.add(gather);
 }
@@ -316,7 +316,7 @@ function track(now){
   const img = wctx.getImageData(0, 0, ww, wh), q = jsQR(img.data, ww, wh, { inversionAttempts:'dontInvert' });
   if (!q || !q.location){ if (now - lastSeen > 700) pose3.has = false; return; }
   const got = P.parseURL(q.data);
-  if (got && got.code !== seed.code){ seed = got; build(); germinar(now); msg('otra semilla: ' + got.code.slice(0,4)); }
+  if (got && got.code !== seed.code){ seed = got; build(); germinar(now); msg(tr('otra semilla:') + ' ' + got.code.slice(0,4)); }
   const n = 17 + 4*q.version, A = P.anchorMM(n), side = A.side, L = q.location;
   const toScr = p => [p.x/k*s + ox, p.y/k*s + oy];
   const dst = [L.topLeftCorner, L.topRightCorner, L.bottomRightCorner, L.bottomLeftCorner].map(toScr);
@@ -330,7 +330,7 @@ function track(now){
   cam.fov = 2*Math.atan((Hh/2)/f)*180/Math.PI; cam.aspect = W/Hh; cam.updateProjectionMatrix();
   holder.position.set(A.x, A.y, 0);
   $('#hint').hidden = true; $('#arAyuda').hidden = true;
-  if (!seen){ seen = true; germinar(now); msg('la encontré: no la pierdas de vista', 2600); if (navigator.vibrate) navigator.vibrate(30); }
+  if (!seen){ seen = true; germinar(now); msg(tr('la encontré: no la pierdas de vista'), 2600); if (navigator.vibrate) navigator.vibrate(30); }
 }
 
 /* ---------------- bucle ---------------- */
@@ -382,7 +382,7 @@ function frame(now){
     cam.position.set(0, 0, 0); cam.quaternion.identity(); garden.visible = false;
     if ((frameN++ & 1) === 0 || testSrc) track(now);
     marker.visible = pose3.has; if (pose3.has){ marker.matrix.compose(pose3.t, pose3.q, new THREE.Vector3(1, 1, 1)); marker.matrixWorldNeedsUpdate = true; }
-    if (!pose3.has && now - lastSeen > 1500){ $('#hint').hidden = false; $('#hint span').textContent = seen ? 'la perdí: vuelve a apuntar a la tira' : 'busca el QR de tu tira'; }
+    if (!pose3.has && now - lastSeen > 1500){ $('#hint').hidden = false; $('#hint span').textContent = tr(seen ? 'la perdí: vuelve a apuntar a la tira' : 'busca el QR de tu tira'); }
     if (!seen && arT0 && now - arT0 > 12000) $('#arAyuda').hidden = false;
     if (seen && !pose3.has && (tl.state === 'gather' || tl.state === 'grow')) tl.t0 += now - (_last || now);
   }
@@ -397,7 +397,7 @@ function recordar(s, t, extra){ if (s === DEMO) return; const L = misLeer(); let
   Object.assign(x, extra || {}, { v:Date.now() }); misGuardar(L); $('#bMis').hidden = false; }
 function misPintar(){
   const L = misLeer().sort((a, b) => (b.v || 0) - (a.v || 0)), ul = $('#misLista'); ul.innerHTML = '';
-  if (!L.length){ ul.innerHTML = '<li class="sub">todavía no hay semillas en este teléfono.</li>'; return; }
+  if (!L.length){ ul.innerHTML = '<li class="sub">' + tr('todavía no hay semillas en este teléfono.') + '</li>'; return; }
   for (const x of L){
     const b = P.decode(x.s); if (!b) continue; const pl = P.grow(b), hx = P.hexagram(pl.f), pal = P.palette(b);
     const li = document.createElement('li'), cv = document.createElement('canvas'); cv.width = 96; cv.height = 96; cv.className = 'mini';
@@ -405,10 +405,10 @@ function misPintar(){
     c.fillStyle = '#050505'; c.fillRect(0, 0, 96, 96); c.globalCompositeOperation = 'lighter';
     for (let k=0;k<3;k++){ const col = P.paletteRGB(pal, .15 + k*.25).map(v => Math.round(v*255)); c.globalAlpha = .85; P.drawPlant(c, pl, 1, { ox:48, oy:91, s:sc, rot:k*.35, col:`rgb(${col})`, lw:1.2, min:1, dimRoots:0, fillLeaves:k === 2 }); }
     const d = document.createElement('div'); d.className = 'misd';
-    d.innerHTML = `<b>${nice(x.s)}</b><span>${fmtMinute(x.t)}</span><span>${hx.n} · ${hx.name}${x.sem ? ' · sembrada' : ''}</span>`;
+    d.innerHTML = `<b>${nice(x.s)}</b><span>${fmtMinute(x.t)}</span><span>${hx.n} · ${tr(hx.name)}${x.sem ? ' · ' + tr('sembrada') : ''}</span>`;
     const a = document.createElement('div'); a.className = 'misa';
-    const g = document.createElement('button'); g.className = 'liga'; g.textContent = 'germinar'; g.onclick = () => { $('#cMis').hidden = true; setSeed(x.s, x.t, true); capa('#cGermina'); };
-    const e = document.createElement('button'); e.className = 'liga'; e.textContent = 'verla en Endeles'; e.onclick = () => irAlBosque(x.s, x.t, false);
+    const g = document.createElement('button'); g.className = 'liga'; g.textContent = tr('germinar'); g.onclick = () => { $('#cMis').hidden = true; setSeed(x.s, x.t, true); capa('#cGermina'); };
+    const e = document.createElement('button'); e.className = 'liga'; e.textContent = tr('verla en Endeles'); e.onclick = () => irAlBosque(x.s, x.t, false);
     a.append(g, e); li.append(cv, d, a); ul.append(li);
   }
 }
@@ -450,13 +450,13 @@ async function camAbrir(){
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ $('#fCam').click(); return; }
   capa('#cCam'); const vd = $('#camV');
   try { camS = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:{ ideal:camCara }, width:{ ideal:1920 }, height:{ ideal:1920 } } }); }
-  catch(e){ capa('#cUmbral'); msg(e && e.name === 'NotAllowedError' ? 'sin permiso para la cámara: elige una foto.' : 'la cámara no respondió: elige una foto.', 3500); $('#fGal').click(); return; }
+  catch(e){ capa('#cUmbral'); msg(tr(e && e.name === 'NotAllowedError' ? 'sin permiso para la cámara: elige una foto.' : 'la cámara no respondió: elige una foto.'), 3500); $('#fGal').click(); return; }
   vd.srcObject = camS; vd.classList.toggle('espejo', camCara === 'user'); await vd.play().catch(() => {});
 }
 function camCerrar(){ if (camS){ camS.getTracks().forEach(t => t.stop()); camS = null; const vd = $('#camV'); if (vd) vd.srcObject = null; } }
 async function usarFoto(f){
   await Promise.race([geoP || Promise.resolve(), new Promise(r => setTimeout(r, 2500))]);
-  try { await window.XINAS.loadFile(f, true); lectura(); } catch(err){ msg('No se pudo abrir esa imagen.'); capa('#cUmbral'); }
+  try { await window.XINAS.loadFile(f, true); lectura(); } catch(err){ msg(tr('No se pudo abrir esa imagen.')); capa('#cUmbral'); }
 }
 $('#bDisparo').onclick = () => {
   const vd = $('#camV'), w = vd.videoWidth, hh = vd.videoHeight; if (!w || !hh) return;
@@ -480,9 +480,9 @@ function lectura(){
   capa('#cLectura');
   const cv = $('#lTira'), cx = cv.getContext('2d'); cx.imageSmoothingEnabled = false; cx.drawImage(G.tira, 0, 0); cv.classList.remove('ve');
   const w = P.minuteToDate(G.minute), p = n => String(n).padStart(2, '0'), f = G.f;
-  const filas = [['brillo', Math.round(f.b*100)], ['contraste', Math.round(f.c*100)], ['bordes', Math.round(f.e*100)], ['ángulo', Math.round(f.a*180) + '°'],
-    ['peso', `${Math.round(f.x*100)} · ${Math.round(f.y*100)}`], ['instante', `${p(w.getDate())}.${p(w.getMonth()+1)}.${w.getFullYear()} · ${p(w.getHours())}:${p(w.getMinutes())}`],
-    ['lugar', (S.place || '').trim() || (S.lat != null ? `${S.lat.toFixed(2)}, ${S.lon.toFixed(2)}` : 'sin ubicación')]];
+  const filas = [[tr('brillo'), Math.round(f.b*100)], [tr('contraste'), Math.round(f.c*100)], [tr('bordes'), Math.round(f.e*100)], [tr('ángulo'), Math.round(f.a*180) + '°'],
+    [tr('peso'), `${Math.round(f.x*100)} · ${Math.round(f.y*100)}`], [tr('instante'), `${p(w.getDate())}.${p(w.getMonth()+1)}.${w.getFullYear()} · ${p(w.getHours())}:${p(w.getMinutes())}`],
+    [tr('lugar'), (S.place || '').trim() || (S.lat != null ? `${S.lat.toFixed(2)}, ${S.lon.toFixed(2)}` : tr('sin ubicación'))]];
   const dl = $('#lDatos'); dl.innerHTML = filas.map(([k, v]) => `<dt class="ap">${k}</dt><dd class="ap">${v}</dd>`).join('');
   const hx = P.hexagram(f), hg = $('#lHex'); hg.innerHTML = ''; for (let i=5;i>=0;i--){ const r = document.createElement('i'); r.className = hx.lines[i] ? 'y' : 'n'; r.dataset.i = i; hg.append(r); }
   $('#lCodigo').textContent = '';
@@ -491,7 +491,7 @@ function lectura(){
   dl.querySelectorAll('dt').forEach((dt, i) => at(700 + i*260, () => { dt.classList.add('ve'); dt.nextElementSibling.classList.add('ve'); }));
   for (let i=0;i<6;i++) at(2700 + i*300, () => hg.querySelector(`[data-i="${i}"]`).classList.add('ve'));
   const code = nice(G.code); for (let i=0;i<=code.length;i++) at(4700 + i*70, () => $('#lCodigo').textContent = code.slice(0, i));
-  at(4700 + code.length*70 + 200, () => { $('#lCodigo').innerHTML = code + '<span>' + hx.n + ' · ' + hx.name + '</span>'; });
+  at(4700 + code.length*70 + 200, () => { $('#lCodigo').innerHTML = code + '<span>' + hx.n + ' · ' + tr(hx.name) + '</span>'; });
   X.prepareBlob();
   setSeed(G.code, G.minute, false);
 }
@@ -511,11 +511,11 @@ $('#bArSin').onclick = () => { stopAR(); germinar(); };
 $('#bSinTira').onclick = () => { M.asegurar(); vivo(); stopAR(); germinar(); };
 $('#bRe').onclick = () => { M.asegurar(); M.callar(.6); germinar(); };
 $('#bModo').onclick = async () => { M.asegurar(); M.callar(.6); if (mode === 'ar'){ stopAR(); germinar(); } else { const ok = await startAR(); if (!ok) germinar(); } };
-$('#bSon').onclick = () => { M.asegurar(); const on = M.alternar(); $('#bSon').textContent = on ? 'sonido' : 'sin sonido'; $('#bSon').setAttribute('aria-pressed', String(on)); };
+$('#bSon').onclick = () => { M.asegurar(); const on = M.alternar(); $('#bSon').textContent = tr(on ? 'sonido' : 'sin sonido'); $('#bSon').setAttribute('aria-pressed', String(on)); };
 document.addEventListener('visibilitychange', () => { if (document.hidden) M.callar(.3); });
 $('#bInfo').onclick = () => $('#wInfo').hidden = !$('#wInfo').hidden; $('#xInfo').onclick = () => $('#wInfo').hidden = true;
 $('#sFov').oninput = e => { hfov = +e.target.value; $('#oFov').textContent = hfov + '°'; e.target.style.setProperty('--p', ((hfov - 40)/50*100) + '%'); };
-$('#herbario').innerHTML = HERBARIO.map(h => `<p>${h.linea}<span>a partir de ${h.autor}, <i>${h.obra}</i> · ${h.etapas[0]}</span></p>`).join('');
+$('#herbario').innerHTML = HERBARIO.map(h => `<p>${h.linea}<span>${tr('a partir de')} ${h.autor}, <i>${h.obra}</i> · ${tr(h.etapas[0])}</span></p>`).join('');
 for (const b of ['#bQue1', '#bQue2']) $(b).onclick = () => { $('#cQue').hidden = false; };
 $('#xQue').onclick = () => { $('#cQue').hidden = true; };
 
@@ -533,14 +533,15 @@ async function irAlBosque(code, minute, sembrar){
   }
   if (sembrar) recordar(code, minute, { sem:true, enServidor:ok });
   const q = 's=' + code + '&t=' + minute.toString(36);
-  location.href = base + '?' + q + '#' + q;
+  const ql = q + '&l=' + window.IDIOMA.L;
+  location.href = base + '?' + ql + '#' + ql;
 }
 $('#bSembrar').onclick = () => { $('#cPuente').hidden = false; };
 $('#xPuente').onclick = () => { $('#cPuente').hidden = true; };
 $('#bEntrarBosque').onclick = async () => {
-  const b = $('#bEntrarBosque'); b.disabled = true; b.textContent = 'sembrando…'; M.callar(1.2);
+  const b = $('#bEntrarBosque'); b.disabled = true; b.textContent = tr('sembrando…'); M.callar(1.2);
   await irAlBosque(seed.code, seed.minute, true);
-  setTimeout(() => { b.disabled = false; b.textContent = 'entrar al bosque'; }, 4000);
+  setTimeout(() => { b.disabled = false; b.textContent = tr('entrar al bosque'); }, 4000);
 };
 $('#bMis').onclick = $('#bMis2').onclick = () => { misPintar(); $('#cMis').hidden = false; };
 $('#xMis').onclick = () => { $('#cMis').hidden = true; };
@@ -556,6 +557,7 @@ window.VISOR = { VER, test(img){ testSrc = img; const t = new THREE.Texture(img)
 
 /* entrada: con semilla en el enlace → germina; sin ella → el umbral, con una planta de muestra detrás */
 build(); acento(seed.code); setMode('jardin');
+IDIOMA.selector($('#selIdioma')); IDIOMA.selector($('#selIdioma2'));
 if (fromLink) capa('#cGermina'); else capa('#cUmbral');
 requestAnimationFrame(frame);
 
